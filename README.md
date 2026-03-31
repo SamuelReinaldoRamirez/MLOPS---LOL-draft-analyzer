@@ -2,53 +2,50 @@
 
 Projet MLOps pour la prédiction de résultats de matchs League of Legends à partir de la composition d'équipe (draft).
 
-## Architecture
-
-```
-MLOPS---LOL-draft-analyzer/
-├── database/                       # Base de données PostgreSQL (Docker)
-│   ├── docker-compose.yml
-│   ├── init.sql
-│   ├── migrate_sqlite_to_postgres.py
-│   ├── .env.example
-│   └── README.md
-└── README.md
-```
-
 ## Démarrage rapide
 
 ### Prérequis
 
 - Docker Desktop
-- Python 3.8+
-- Le fichier `lol_matches.db` (base SQLite source, ~2.8 Go)
 
-### 1. Cloner le repo
+### Installation
 
 ```bash
 git clone <repo-url>
-cd MLOPS---LOL-draft-analyzer
-```
-
-### 2. Lancer la base de données
-
-```bash
-cd database
+cd MLOPS---LOL-draft-analyzer/database
 cp .env.example .env
 docker compose up -d
 ```
 
-### 3. Migrer les données
+La base PostgreSQL démarre avec **12M+ lignes** pré-chargées. Prêt en ~1 min.
 
-```bash
-pip install psycopg2-binary
-python migrate_sqlite_to_postgres.py --sqlite-path /chemin/vers/lol_matches.db
-```
-
-### 4. Vérifier
+### Vérifier
 
 ```bash
 docker exec -it lol_draft_db psql -U lol_admin -d lol_draft -c "SELECT COUNT(*) FROM matches;"
+# → 305591
+```
+
+## Connexion
+
+```
+postgresql://lol_admin:lol_draft_2025@localhost:5434/lol_draft
+```
+
+## Architecture
+
+```
+MLOPS---LOL-draft-analyzer/
+├── database/                          # Base PostgreSQL (Docker)
+│   ├── docker-compose.yml
+│   ├── init.sql                       # Schéma (15 tables)
+│   ├── restore.sh                     # Auto-restore au 1er lancement
+│   ├── lol_draft.dump                 # Données compressées (~747 Mo)
+│   ├── migrate_sqlite_to_postgres.py  # Migration SQLite (optionnel)
+│   ├── .env.example
+│   └── README.md
+├── .gitignore
+└── README.md
 ```
 
 ## Données
@@ -61,9 +58,3 @@ docker exec -it lol_draft_db psql -U lol_admin -d lol_draft -c "SELECT COUNT(*) 
 - **2.5M** événements in-game (kills, objectifs)
 - **1.6M** maîtrises de champions
 - Synergies et matchups de champions (op.gg)
-
-## Connexion à la base
-
-```
-postgresql://lol_admin:lol_draft_2025@localhost:5434/lol_draft
-```

@@ -5,39 +5,22 @@ Base de données PostgreSQL contenant les données de matchs League of Legends c
 ## Prérequis
 
 - [Docker](https://docs.docker.com/get-docker/) (Docker Desktop ou Docker Engine)
-- Python 3.8+ avec `psycopg2-binary`
-- Le fichier source `lol_matches.db` (SQLite, ~2.8 Go)
 
-## Installation
-
-### 1. Configurer l'environnement
+## Installation (2 commandes)
 
 ```bash
+cd database/
 cp .env.example .env
-# Modifier .env si besoin (port, mot de passe...)
-```
-
-### 2. Lancer PostgreSQL
-
-```bash
 docker compose up -d
 ```
 
-Vérifier que le conteneur est prêt :
+C'est tout. Le dump (~747 Mo) se restaure automatiquement au premier lancement.
+La base est prête quand le healthcheck passe :
+
 ```bash
 docker compose ps
-# STATUS doit afficher "healthy"
+# STATUS: healthy
 ```
-
-### 3. Migrer les données depuis SQLite
-
-```bash
-pip install psycopg2-binary
-python migrate_sqlite_to_postgres.py --sqlite-path /chemin/vers/lol_matches.db
-```
-
-> La migration prend ~15-20 min (~12M lignes).
-> Le script est idempotent : relancez-le si interrompu.
 
 ## Connexion
 
@@ -57,7 +40,7 @@ conn = psycopg2.connect(
 )
 ```
 
-Ou via le conteneur :
+Via le conteneur :
 ```bash
 docker exec -it lol_draft_db psql -U lol_admin -d lol_draft
 ```
@@ -92,18 +75,17 @@ docker logs lol_draft_db
 
 # Backup
 docker exec lol_draft_db pg_dump -U lol_admin lol_draft > backup.sql
-
-# Restore
-cat backup.sql | docker exec -i lol_draft_db psql -U lol_admin -d lol_draft
 ```
 
-## Structure des fichiers
+## Structure
 
 ```
 database/
-├── docker-compose.yml              # Conteneur PostgreSQL
-├── init.sql                        # Schéma SQL (exécuté au 1er lancement)
-├── migrate_sqlite_to_postgres.py   # Script de migration SQLite → PG
-├── .env.example                    # Variables d'environnement (template)
-└── README.md                       # Ce fichier
+├── docker-compose.yml     # Conteneur PostgreSQL
+├── init.sql               # Schéma SQL (15 tables + index)
+├── restore.sh             # Script de restauration automatique
+├── lol_draft.dump         # Dump compressé (~747 Mo)
+├── .env.example           # Variables d'environnement (template)
+├── migrate_sqlite_to_postgres.py  # (optionnel) migration depuis SQLite
+└── README.md
 ```

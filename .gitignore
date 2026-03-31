@@ -8,13 +8,14 @@ venv/
 # Environment
 .env
 
-# Data (too large for git)
+# Data (too large for git — use Git LFS or share separately)
 data/
 *.db
 *.sqlite
 *.csv
 *.parquet
 *.csv.gz
+*.dump
 
 # Docker volumes
 pgdata/
