@@ -6,15 +6,20 @@ Base de données PostgreSQL contenant les données de matchs League of Legends c
 
 - [Docker](https://docs.docker.com/get-docker/) (Docker Desktop ou Docker Engine)
 
-## Installation (2 commandes)
+## Installation
 
+1. Télécharger `lol_draft.dump` (~747 Mo) depuis Google Drive :
+   > https://drive.google.com/drive/folders/14YpB_eyofJiXBE38qdKgSR6SNOWkpcVh?usp=sharing
+
+2. Placer le fichier dans ce dossier (`database/`)
+
+3. Lancer :
 ```bash
-cd database/
 cp .env.example .env
 docker compose up -d
 ```
 
-C'est tout. Le dump (~747 Mo) se restaure automatiquement au premier lancement.
+Le dump se restaure automatiquement au premier lancement.
 La base est prête quand le healthcheck passe :
 
 ```bash

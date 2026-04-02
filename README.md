@@ -13,6 +13,14 @@ Projet MLOps pour la prédiction de résultats de matchs League of Legends à pa
 ```bash
 git clone <repo-url>
 cd MLOPS---LOL-draft-analyzer/database
+```
+
+Télécharger le dump de la base (~747 Mo) :
+> https://drive.google.com/drive/folders/14YpB_eyofJiXBE38qdKgSR6SNOWkpcVh?usp=sharing
+
+Placer `lol_draft.dump` dans le dossier `database/`, puis :
+
+```bash
 cp .env.example .env
 docker compose up -d
 ```
