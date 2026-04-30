@@ -2,7 +2,7 @@
 -- LOL Draft Analyzer — PostgreSQL Schema
 -- 15 tables, ~12M rows from Riot API match data
 -- ============================================================
-
+CREATE DATABASE metabase_db;
 -- Matches (305K ranked SoloQ games)
 CREATE TABLE IF NOT EXISTS matches (
     match_id TEXT PRIMARY KEY,

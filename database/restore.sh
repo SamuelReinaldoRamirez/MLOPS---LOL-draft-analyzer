@@ -8,9 +8,15 @@ DUMP_FILE="/docker-entrypoint-initdb.d/lol_draft.dump"
 
 if [ -f "$DUMP_FILE" ]; then
     echo "🔄 Restoring database from dump..."
-    pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
-        --no-owner --no-privileges --if-exists --clean \
-        "$DUMP_FILE" 2>/dev/null || true
+    pg_restore -U "$POSTGRES_USER" \
+        -d "$POSTGRES_DB" \
+        --data-only \
+        --no-owner --no-privileges \
+        --disable-triggers \
+        "$DUMP_FILE"
+#    pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+#        --no-owner --no-privileges --if-exists --clean \
+#        "$DUMP_FILE" 2>/dev/null
     echo "✅ Database restored successfully."
 else
     echo "⚠️  No dump file found, starting with empty schema (init.sql)."
