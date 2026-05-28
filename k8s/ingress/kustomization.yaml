@@ -1,0 +1,18 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# k8s/ingress — exposes the stack via nginx-ingress + TLS (cert-manager) and
+# locks down the namespace with NetworkPolicies. Aggregated by k8s/kustomization.yaml.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: lol-draft
+
+resources:
+  - ingress.yaml
+  - networkpolicy.yaml
+
+labels:
+  - includeSelectors: false
+    pairs:
+      app.kubernetes.io/part-of: lol-draft-predictor
+      app.kubernetes.io/managed-by: kustomize

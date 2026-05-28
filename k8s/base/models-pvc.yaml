@@ -1,0 +1,21 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Shared models volume. Both the api and streamlit Deployments mount it at
+# /app/models so a freshly-trained `.pkl` is available to every replica.
+#
+# ReadWriteMany is required because multiple pods read concurrently. Storage
+# classes supporting RWX: NFS-CSI, EFS, Azure Files, CephFS, Longhorn.
+# Tweak `storage:` to your data scale (5 models × ~5 MB → 256 Mi is plenty).
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lol-draft-models
+  namespace: lol-draft
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  # storageClassName is intentionally unset so the cluster's default applies;
+  # override in an overlay to pin a specific RWX class.

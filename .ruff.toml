@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Ruff configuration (Phase 3 — lint).
+#
+# Goal: a *lightweight*, sane ruleset for CI. The existing Phase 1/2 code is NOT
+# rewritten to satisfy lint — CI runs ruff in a non-blocking way (`--exit-zero`,
+# see .github/workflows/ci.yml). Tighten / make blocking in a later phase once
+# the existing debt is paid down. Run locally with:  `ruff check .`
+# ─────────────────────────────────────────────────────────────────────────────
+
+target-version = "py311"
+line-length = 100
+
+# Don't lint generated / vendored / non-source trees.
+extend-exclude = [
+    ".git",
+    "__pycache__",
+    ".pytest_cache",
+    ".venv",
+    "venv",
+    "database/lol_draft.dump",
+]
+
+[lint]
+# A small, high-signal ruleset (not the kitchen sink):
+#   E/W  pycodestyle errors & warnings
+#   F    pyflakes (unused imports, undefined names, ...)
+#   I    isort (import ordering)
+#   UP   pyupgrade (modern syntax)
+#   B    flake8-bugbear (likely bugs)
+select = ["E", "W", "F", "I", "UP", "B"]
+
+# Pragmatic relaxations for an ML/data codebase.
+ignore = [
+    "E501",  # line too long — handled by formatter, not worth churn here
+    "E402",  # module-level import not at top (conditional xgboost/lightgbm imports)
+    "B008",  # function call in default arg (common with FastAPI Depends())
+]
+
+[lint.per-file-ignores]
+# Tests may re-import / use fixtures loosely.
+"**/tests/*.py" = ["F401", "F811"]
+"conftest.py" = ["E402"]

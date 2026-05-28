@@ -1,0 +1,96 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# PostgreSQL — StatefulSet with a per-replica PVC for durable storage.
+# Single replica by design (the application reads + the training script writes,
+# but no read-replica is needed for this scale). Promote to a managed DB
+# (RDS / CloudSQL) in production.
+#
+# The headless Service `postgres` lets ${POSTGRES_HOST}=postgres resolve in all
+# clients (matches the compose hostname). On first boot, the official image
+# initialises the cluster using POSTGRES_DB / POSTGRES_USER / POSTGRES_PASSWORD;
+# the dump must be loaded separately (`kubectl cp` + `pg_restore` from a pod).
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: lol-draft
+  labels:
+    app: postgres
+    component: db
+spec:
+  clusterIP: None      # headless — pods get stable DNS via the StatefulSet
+  selector:
+    app: postgres
+  ports:
+    - name: pg
+      port: 5432
+      targetPort: pg
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: lol-draft
+  labels:
+    app: postgres
+    component: db
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        component: db
+    spec:
+      securityContext:
+        fsGroup: 999     # postgres group in the upstream image
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - name: pg
+              containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: lol-draft-config
+            - secretRef:
+                name: lol-draft-secrets
+          env:
+            # Pin the on-disk subdirectory so the PVC root stays clean (the
+            # Alpine image refuses to init if the volume root already exists
+            # as something else).
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+        # storageClassName: unset → cluster default; pin in overlay if needed.

@@ -1,0 +1,15 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Grafana state — keeps the user DB (alert states, annotations, dashboard
+# starring) across pod restarts. Dashboards themselves are immutable and live
+# in the `grafana-dashboards` ConfigMap (provisioning is read-only).
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-data
+  namespace: lol-draft
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
