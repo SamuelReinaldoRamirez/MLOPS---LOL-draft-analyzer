@@ -1,0 +1,97 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LoL Draft Predictor — DVC pipeline (Phase 2: Data + Model versioning).
+#
+# One stage per timeline model (@5/@10/@15/@20). Each stage:
+#   - depends on the training script, the DB dump (DVC-tracked), and params,
+#   - reads hyper-parameters from `params.yaml`,
+#   - produces a versioned `models/model_at{minute}.pkl` and a JSON metrics file.
+#
+# Stages run via `scripts/dvc_train.sh`, which wraps `docker compose run training`
+# with a bind mount so DVC sees the output on the host (the compose volume
+# `lol_draft_models` is bypassed for DVC-driven runs only — `make demo` and the
+# regular compose flow are unchanged).
+#
+# Usage:
+#   make dvc-track-data          # one-off: dvc add database/lol_draft.dump
+#   dvc repro                    # re-run the whole pipeline reproducibly
+#   dvc repro train_at10         # re-run a single stage
+#   dvc dag                      # print the DAG
+#   dvc metrics show             # accuracy / roc_auc per model
+# ─────────────────────────────────────────────────────────────────────────────
+
+stages:
+  train_at5:
+    cmd: ./scripts/dvc_train.sh at5
+    deps:
+      - training/scripts/train_all_models.py
+      - training/scripts/db_utils.py
+      - training/scripts/mlflow_tracking.py
+      - database/lol_draft.dump
+    params:
+      - train.seed
+      - train.test_size
+      - train.val_size
+      - train.xgb
+      - train.lgb
+    outs:
+      - models/model_at5.pkl
+    metrics:
+      - models/metrics_at5.json:
+          cache: false
+
+  train_at10:
+    cmd: ./scripts/dvc_train.sh at10
+    deps:
+      - training/scripts/train_all_models.py
+      - training/scripts/db_utils.py
+      - training/scripts/mlflow_tracking.py
+      - database/lol_draft.dump
+    params:
+      - train.seed
+      - train.test_size
+      - train.val_size
+      - train.xgb
+      - train.lgb
+    outs:
+      - models/model_at10.pkl
+    metrics:
+      - models/metrics_at10.json:
+          cache: false
+
+  train_at15:
+    cmd: ./scripts/dvc_train.sh at15
+    deps:
+      - training/scripts/train_all_models.py
+      - training/scripts/db_utils.py
+      - training/scripts/mlflow_tracking.py
+      - database/lol_draft.dump
+    params:
+      - train.seed
+      - train.test_size
+      - train.val_size
+      - train.xgb
+      - train.lgb
+    outs:
+      - models/model_at15.pkl
+    metrics:
+      - models/metrics_at15.json:
+          cache: false
+
+  train_at20:
+    cmd: ./scripts/dvc_train.sh at20
+    deps:
+      - training/scripts/train_all_models.py
+      - training/scripts/db_utils.py
+      - training/scripts/mlflow_tracking.py
+      - database/lol_draft.dump
+    params:
+      - train.seed
+      - train.test_size
+      - train.val_size
+      - train.xgb
+      - train.lgb
+    outs:
+      - models/model_at20.pkl
+    metrics:
+      - models/metrics_at20.json:
+          cache: false

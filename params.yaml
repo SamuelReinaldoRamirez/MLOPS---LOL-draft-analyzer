@@ -1,0 +1,37 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LoL Draft Predictor — DVC pipeline parameters (Phase 2 / Data + Model
+# versioning).
+#
+# These hyper-parameters mirror the in-code defaults of
+# `training/scripts/train_all_models.py`. When this file is present, the
+# training script overrides its built-in defaults with the values below
+# (gracefully ignored if PyYAML or the file is missing). This lets `dvc repro`
+# re-run training reproducibly and produces a DVC-tracked lineage:
+#   params.yaml  +  database/lol_draft.dump.dvc  →  models/model_at{5,10,15,20}.pkl
+# ─────────────────────────────────────────────────────────────────────────────
+
+train:
+  # Random seed for splits / model initialisers.
+  seed: 42
+  # Train/val/test holdout fractions (applied twice: trainval/test, then train/val).
+  test_size: 0.15
+  val_size: 0.15
+
+  # XGBoost hyper-parameters (mirrors XGB_PARAMS in train_all_models.py).
+  xgb:
+    n_estimators: 200
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+
+  # LightGBM hyper-parameters (mirrors LGB_PARAMS in train_all_models.py).
+  lgb:
+    n_estimators: 200
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+
+  # Timeline minutes for which a model is trained (one .pkl per minute).
+  minutes: [5, 10, 15, 20]

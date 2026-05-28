@@ -1,0 +1,4 @@
+# Generated Evidently drift reports — never commit (regenerated on demand via
+# `make drift` / scripts/auto_retrain.py). Keep the directory itself.
+*
+!.gitignore

@@ -1,0 +1,103 @@
+{
+  "gameId": 6000000123,
+  "gameType": "MATCHED_GAME",
+  "gameStartTime": 1716600500000,
+  "mapId": 11,
+  "gameLength": 540,
+  "platformId": "EUW1",
+  "gameMode": "CLASSIC",
+  "gameQueueConfigId": 420,
+  "participants": [
+    {
+      "puuid": "AbCdEf_recorded-fixture-puuid-0123456789abcdef0123456789abcdef0123456789abcd",
+      "teamId": 100,
+      "championId": 266,
+      "summonerName": "Faker",
+      "spell1Id": 4,
+      "spell2Id": 12
+    },
+    {
+      "puuid": "puuid-blue-jungle-0000000000000000000000000000000000000000000000000000000000",
+      "teamId": 100,
+      "championId": 64,
+      "summonerName": "BlueJungle",
+      "spell1Id": 11,
+      "spell2Id": 4
+    },
+    {
+      "puuid": "puuid-blue-mid-00000000000000000000000000000000000000000000000000000000000000",
+      "teamId": 100,
+      "championId": 103,
+      "summonerName": "BlueMid",
+      "spell1Id": 4,
+      "spell2Id": 14
+    },
+    {
+      "puuid": "puuid-blue-adc-00000000000000000000000000000000000000000000000000000000000000",
+      "teamId": 100,
+      "championId": 222,
+      "summonerName": "BlueAdc",
+      "spell1Id": 7,
+      "spell2Id": 4
+    },
+    {
+      "puuid": "puuid-blue-support-0000000000000000000000000000000000000000000000000000000000",
+      "teamId": 100,
+      "championId": 412,
+      "summonerName": "BlueSupport",
+      "spell1Id": 4,
+      "spell2Id": 14
+    },
+    {
+      "puuid": "puuid-red-top-00000000000000000000000000000000000000000000000000000000000000",
+      "teamId": 200,
+      "championId": 86,
+      "summonerName": "RedTop",
+      "spell1Id": 4,
+      "spell2Id": 12
+    },
+    {
+      "puuid": "puuid-red-jungle-000000000000000000000000000000000000000000000000000000000000",
+      "teamId": 200,
+      "championId": 104,
+      "summonerName": "RedJungle",
+      "spell1Id": 11,
+      "spell2Id": 4
+    },
+    {
+      "puuid": "puuid-red-mid-000000000000000000000000000000000000000000000000000000000000000",
+      "teamId": 200,
+      "championId": 61,
+      "summonerName": "RedMid",
+      "spell1Id": 4,
+      "spell2Id": 14
+    },
+    {
+      "puuid": "puuid-red-adc-000000000000000000000000000000000000000000000000000000000000000",
+      "teamId": 200,
+      "championId": 145,
+      "summonerName": "RedAdc",
+      "spell1Id": 7,
+      "spell2Id": 4
+    },
+    {
+      "puuid": "puuid-red-support-00000000000000000000000000000000000000000000000000000000000",
+      "teamId": 200,
+      "championId": 89,
+      "summonerName": "RedSupport",
+      "spell1Id": 4,
+      "spell2Id": 14
+    }
+  ],
+  "bannedChampions": [
+    { "championId": 157, "teamId": 100, "pickTurn": 1 },
+    { "championId": 238, "teamId": 200, "pickTurn": 2 },
+    { "championId": 555, "teamId": 100, "pickTurn": 3 },
+    { "championId": 91, "teamId": 200, "pickTurn": 4 },
+    { "championId": 105, "teamId": 100, "pickTurn": 5 },
+    { "championId": 7, "teamId": 200, "pickTurn": 6 }
+  ],
+  "observers": {
+    "encryptionKey": "fixture-observer-key"
+  }
+}

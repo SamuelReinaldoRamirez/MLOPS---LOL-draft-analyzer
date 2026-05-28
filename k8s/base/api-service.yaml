@@ -1,0 +1,21 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# FastAPI inference API — Service.
+# ClusterIP (in-cluster only). External traffic goes through Ingress (see
+# k8s/ingress/ingress.yaml), which terminates TLS and routes `api.<host>` here.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: lol-draft-api
+  namespace: lol-draft
+  labels:
+    app: lol-draft-api
+    component: api
+spec:
+  type: ClusterIP
+  selector:
+    app: lol-draft-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

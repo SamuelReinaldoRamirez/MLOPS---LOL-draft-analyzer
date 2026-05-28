@@ -1,0 +1,24 @@
+# Keep the API build context small and reproducible.
+#
+# IMPORTANT: do NOT ignore models/ or *.pkl here. Staged model_*.pkl files in
+# api/models/ are intentionally copied into the image (COPY models/ /app/models/)
+# so the API is PaaS-ready without a docker volume. Excluding them would defeat
+# the purpose of staging.
+
+# Python caches / build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Tests are not needed at runtime
+tests/
+
+# Local virtualenvs
+.venv/
+venv/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp

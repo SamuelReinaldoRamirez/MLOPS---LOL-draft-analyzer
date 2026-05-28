@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# k8s/base — application Deployments + StatefulSet + PVCs + ConfigMap/Secret.
+# Aggregated by k8s/kustomization.yaml together with k8s/monitoring and
+# k8s/ingress for a single `kubectl apply -k k8s` (or `make k8s-apply`).
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: lol-draft
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - models-pvc.yaml
+  - mlflow-pvc.yaml
+  - postgres-statefulset.yaml
+  - api-deployment.yaml
+  - api-service.yaml
+  - api-hpa.yaml
+  - mlflow-deployment.yaml
+  - streamlit-deployment.yaml
+
+labels:
+  - includeSelectors: false
+    pairs:
+      app.kubernetes.io/part-of: lol-draft-predictor
+      app.kubernetes.io/managed-by: kustomize

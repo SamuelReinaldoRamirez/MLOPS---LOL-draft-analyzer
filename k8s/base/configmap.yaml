@@ -1,0 +1,35 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Non-secret configuration shared across services. Mirrors the non-sensitive
+# half of the project `.env.example` (ports, hostnames, MLflow + Riot defaults).
+# Secret values (passwords, API keys) live in `secret.yaml` and are injected
+# via `envFrom: secretRef:` in each Deployment.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lol-draft-config
+  namespace: lol-draft
+data:
+  # ── Postgres ──────────────────────────────────────────────
+  POSTGRES_DB: "lol_draft"
+  POSTGRES_USER: "lol_admin"
+  POSTGRES_HOST: "postgres"     # Service name (in-cluster DNS)
+  POSTGRES_PORT: "5432"
+
+  # ── App services ──────────────────────────────────────────
+  MODELS_DIR: "/app/models"
+  CORS_ALLOW_ORIGINS: "https://lol-draft.example.com,https://streamlit.lol-draft.example.com"
+  NEXT_PUBLIC_API_BASE_URL: "https://api.lol-draft.example.com"
+
+  # ── MLflow (Phase 2) ──────────────────────────────────────
+  MLFLOW_DB: "mlflow"
+  MLFLOW_ARTIFACT_ROOT: "/mlflow/artifacts"
+  MLFLOW_TRACKING_URI: "http://mlflow:5000"
+  MLFLOW_EXPERIMENT: "lol-draft-timeline"
+
+  # ── Phase 4 — Drift / auto-retrain ────────────────────────
+  DRIFT_THRESHOLD: "0.5"
+
+  # ── Riot defaults (per .env.example) ──────────────────────
+  RIOT_PLATFORM: "euw1"
+  RIOT_REGION: "europe"

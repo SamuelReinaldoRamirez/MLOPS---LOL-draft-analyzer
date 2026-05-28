@@ -1,0 +1,595 @@
+# GoalBuddy v2 state.yaml
+# Board truth lives here. goal.md is the editable charter; notes/ holds long receipts only.
+
+version: 2
+
+goal:
+  title: "Player real-games: search summoner, view match history, run draft models on real games"
+  slug: "player-real-games"
+  kind: specific # specific | open_ended | existing_plan | recovery | audit
+  tranche: "Continuous execution: discover the real Riot integration + model contract, then ship verified vertical slices (search+select, match history, past-game prediction, live-game prediction) until the full outcome is complete."
+  status: done # active | blocked | done
+  oracle:
+    signal: "User opens the UI, searches+selects a real Riot ID, sees real match history, and gets real draft-model predictions: a past game shows predicted win prob vs actual result, and a live game (when one exists) shows a prediction from the spectator draft — all via the real API + prod model path."
+    cadence: "after each Worker package and at final audit"
+    final_proof: "Browser walkthrough receipt showing real summoner search -> real history -> past-game prediction (predicted vs actual) and live-game prediction (or graceful no-game state), all hitting the real API + prod model."
+  intake:
+    original_request: "Je veux que les users puissent rechercher leur pseudo et le sélectionner, voir leur historique de games et utiliser les modèles sur leurs games réelles."
+    interpreted_outcome: "Search/select a real Riot ID, view real match history, and run the deployed draft models on real past games (predicted vs actual) and live games (spectator draft)."
+    input_shape: specific # vague | specific | existing_plan | recovery | audit
+    audience: "Players who want model insight on their own real games"
+    authority: requested # requested | approved | inferred | needs_approval | blocked
+    proof_type: demo # test | demo | artifact | metric | review | source_backed_answer | decision
+    completion_proof: "Browser walkthrough: real search -> select -> real history -> past-game prediction (vs actual) + live-game prediction (or graceful no-game), served by the real API + prod model."
+    likely_misfire: "Mock/static summoner search disconnected from real Riot data; mis-reconstructed draft feeding the model garbage; or shipping only past-games and silently dropping the live-game requirement."
+    blind_spots_considered:
+      - "Real state of the 'already integrated' Riot API: which endpoints (account-v1, summoner, match-v5 history/detail, spectator-v5 live), region routing, key location, rate limits."
+      - "Mapping a match-v5 game's participants/bans to the model's 10-champion draft contract (POST /predict/draft, champion_id_map) with correct team sides."
+      - "spectator-v5 only returns data when the player is mid-game -> live slice is intermittently un-demoable; needs a graceful no-live-game state."
+      - "Public rate-limit/abuse exposure with a personal Riot key; key must stay server-side."
+    existing_plan_facts:
+      - "Reuse verified prod-web-ui foundation: Next.js 14 App Router frontend/ (frontend/src/lib/api.ts, NEXT_PUBLIC_API_BASE_URL), FastAPI api/ with POST /predict/draft, CORS, docker-compose."
+      - "Separate goal from prod-web-ui (finished except credential-gated public deploy)."
+      - "CORRECTED (T001): the 'Riot API already integrated' claim is FALSE — zero Riot integration exists. RIOT_API_KEY is a blank placeholder marked OUT OF SCOPE. The whole data path (search, history, past-game, live) must be built from scratch."
+      - "MODEL CONTRACT (T002): POST /predict/draft takes 10 champion DISPLAY NAMES by role slot (blue_top..red_support), NOT IDs; no bans/puuid field. champion_id_map.json (172 champs, name->{id,name}) needs a REVERSE id->name index for match reconstruction. Central risk: role-slot assignment (match-v5 teamPosition can be empty; spectator-v5 has none)."
+      - "CREDENTIAL: a real RIOT_API_KEY is now an operator credential, needed ONLY for live end-to-end verification. All client/routes/reconstruction can be built + unit-tested against recorded fixtures without a live key."
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  # installed | bundled_not_installed | missing | unknown
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  # none | local | unknown
+  selected: local
+  local:
+    status: live # not_requested | starting | live | generated | blocked
+    url: "http://goalbuddy.localhost:41737/player-real-games/"
+    command: "npx goalbuddy board /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer/docs/goals/player-real-games"
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: default
+    objective: "Map the REAL state of the Riot API integration in the repo: endpoints, key config, routing, rate limits, response shapes; confirm wired vs missing."
+    receipt:
+      result: done
+      note: notes/T001-riot-integration-map.md
+      summary: "'Riot API already integrated' is FALSE — ZERO Riot integration exists (no account-v1/match-v5/spectator, no api.riotgames.com calls, no X-Riot-Token). RIOT_API_KEY is a blank placeholder marked OUT OF SCOPE (.env.example:50-52). httpx is test-only. Whole data path (search/select, history, past-game detail, live/spectator) is MISSING and must be built from scratch."
+      key_facts:
+        - "Existing routes only: /health, /models, POST /predict/draft (main.py:354), POST /predict/at/{minute} (main.py:423), /stats/overview (local DB)."
+        - "No outbound HTTP client wired; need async client + platform/regional routing + rate-limit/backoff + RIOT_API_KEY read server-side."
+      spawned_change: "Board reshaped: T004 now builds the Riot client foundation + summoner search; live end-to-end verification gated on operator RIOT_API_KEY (T010)."
+
+  - id: T002
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: default
+    objective: "Map POST /predict/draft contract, match-v5/spectator -> draft mapping, and frontend extension points."
+    receipt:
+      result: done
+      note: notes/T002-model-contract-and-frontend.md
+      summary: "POST /predict/draft (main.py:354) takes 10 champion DISPLAY NAMES by role slot (blue_top..red_support; blue=team_100/red=team_200), no bans/puuid; returns winner + blue/red win prob + confidence + model_used + model_accuracy. champion_id_map.json (172, name->{id,name}) needs a REVERSE id->name index. Frontend = Next.js 14 App Router; client at frontend/src/lib/api.ts (NEXT_PUBLIC_API_BASE_URL); single screen at app/page.tsx; reusable ResultPanel."
+      key_facts:
+        - "CENTRAL RISK = role-slot assignment: match-v5 teamPosition (TOP/JUNGLE/MIDDLE/BOTTOM/UTILITY; adc<-BOTTOM, support<-UTILITY) can be empty; spectator-v5 has NO position at all."
+        - "Filter to SR 5v5 queues (400/420/430/440); unknown champ degrades SILENTLY to neutral defaults; bans are display-only (model ignores them)."
+        - "Riot key MUST stay server-side (FastAPI backend recommended, reuses champion map + predict) — never NEXT_PUBLIC."
+
+  - id: T003
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Given the corrected reality (NO Riot integration; model wants champion NAMES by role; key is an operator credential), decide the architecture (FastAPI backend Riot client vs Next route handlers — PM recommends FastAPI) and define Slice 1 (T004 = Riot client foundation + summoner search by Riot ID, backend route + frontend screen, unit-tested with recorded fixtures so a live key is NOT required to verify logic). Sequence T005/T006/T007 and confirm the credential-gated boundary (T010)."
+    inputs:
+      - "T001 receipt + notes/T001-riot-integration-map.md"
+      - "T002 receipt + notes/T002-model-contract-and-frontend.md"
+      - "goal.md non-negotiable constraints (real data, real model, key server-side)"
+    constraints:
+      - "Do not implement."
+      - "Pick the largest safe useful vertical slice with clear allowed_files, verify commands (must be runnable WITHOUT a live Riot key — use fixtures/mocks for the Riot HTTP layer only, never mock the search result shown to the user in the real flow), and stop conditions."
+      - "Keep the Riot key server-side; honor no-mock-in-shipped-flow."
+      - "Decide the role-slot assignment strategy (teamPosition + fallback) as an explicit Slice-1 or Slice-3 concern."
+    expected_output:
+      - "Architecture decision (where the Riot client lives) + rationale"
+      - "Exact Worker objective for T004 (Slice 1)"
+      - "allowed_files"
+      - "verify (no-live-key)"
+      - "stop_if"
+      - "Sequencing + any reshaping of T005/T006/T007"
+    receipt:
+      result: done
+      decision: "FastAPI backend (api/) hosts the Riot client — reuses champion_id_map + the in-process predict path, key stays server-side (never NEXT_PUBLIC), one backend + existing CORS. A Next route-handler proxy would duplicate reconstruction and still need a Node-side key. No override risk found."
+      full_outcome_complete: false
+      rationale: "Slice 1 (T004) = real vertical (GET /riot/summoner + frontend search/select screen) PLUS a unit-tested shared draft-reconstruction util that T006/T007 reuse. All verifiable WITHOUT a live key by mocking only the Riot HTTP transport against recorded real shapes. Search-only would be too thin; pulling history/predict in would sprawl scope."
+      shared_components: "api/app/draft_reconstruction.py = single source of truth for match->draft: reverse championId->name index (from champion_id_map.json) + role-slot strategy (teamPosition adc<-BOTTOM/support<-UTILITY + deterministic fallback for empty/UNKNOWN and spectator-v5 no-position). Built+tested in T004; reused unchanged by T006/T007."
+      note: "httpx must move from test-only to a PROD dep in api/requirements.txt (already in T004 allowed_files; not a scope expansion). Grounded in api/app/main.py single-file app, api/tests/conftest.py fixture pattern, frontend Next 14 App Router."
+
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: >
+      Slice 1 — Riot client foundation + summoner search (FastAPI backend). (1) Add api/app/riot_client.py:
+      async httpx client; X-Riot-Token from RIOT_API_KEY (os.getenv); platform->regional routing config
+      (RIOT_PLATFORM/RIOT_REGION); bounded timeout + 404/429/5xx handling; missing key -> clear 503.
+      Implement account-v1 by-riot-id {gameName}/{tagLine} -> puuid (+ optional summoner-v4 by-puuid for
+      level/profileIcon). (2) Add api/app/riot_models.py Pydantic req/resp. (3) Wire ONE route in
+      api/app/main.py: GET /riot/summoner?gameName=&tagLine=&region= -> resolved player. (4) Add the SHARED
+      api/app/draft_reconstruction.py: reverse championId->name index (from champion_id_map.json) + role-slot
+      mapper (teamPosition TOP/JUNGLE/MIDDLE/BOTTOM/UTILITY -> top/jungle/mid/adc/support, adc<-BOTTOM,
+      support<-UTILITY, with a documented deterministic fallback for empty/UNKNOWN and for spectator-v5's
+      absent position) — built + unit-tested now for T006/T007 reuse; need NOT be wired into the search route
+      yet. (5) Promote httpx to a prod dep in api/requirements.txt. (6) Frontend: new App-Router search/select
+      screen (frontend/src/app/search/page.tsx) + searchSummoner() in frontend/src/lib/api.ts; graceful
+      not-found / rate-limited / no-key / network states; no mocked result in the real flow. (7) Update
+      .env.example (RIOT_API_KEY + RIOT_PLATFORM/RIOT_REGION). All Riot HTTP mocked in tests via recorded
+      real shapes; verifiable WITHOUT a live key.
+    allowed_files:
+      - "api/app/riot_client.py"
+      - "api/app/riot_models.py"
+      - "api/app/draft_reconstruction.py"
+      - "api/app/main.py"
+      - "api/requirements.txt"
+      - "api/tests/test_riot_client.py"
+      - "api/tests/test_riot_summoner_route.py"
+      - "api/tests/test_draft_reconstruction.py"
+      - "api/tests/fixtures/__init__.py"
+      - "api/tests/fixtures/riot_account_v1.json"
+      - "api/tests/fixtures/riot_summoner_v4.json"
+      - "api/tests/conftest.py"
+      - "frontend/src/app/search/page.tsx"
+      - "frontend/src/lib/api.ts"
+      - "frontend/src/components/SummonerSearch.tsx"
+      - ".env.example"
+      - "frontend/.env.local.example"
+    verify:
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer && python -m pytest api/tests/test_riot_client.py api/tests/test_riot_summoner_route.py api/tests/test_draft_reconstruction.py -q"
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer && python -m pytest -q"
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer/frontend && npm run lint"
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer/frontend && npm run build"
+    verify_notes: >
+      Mock ONLY the Riot HTTP transport, never the user-facing search result. Follow the existing
+      api/tests pattern (root conftest puts api/ on sys.path -> import as app.main; api/tests/conftest
+      monkeypatches DB+models + TestClient). Inject a mocked async httpx transport (httpx.MockTransport or
+      monkeypatch the client request) returning recorded JSON in api/tests/fixtures/*.json. Route tests hit
+      GET /riot/summoner via TestClient asserting 200 (maps puuid+profile), 404 (not found), 429
+      (rate-limited), 503 (RIOT_API_KEY unset). Frontend build/lint run with no env + no network.
+    stop_if:
+      - "Work needs files outside allowed_files (e.g. new top-level package, Dockerfile/compose/k8s edits) — stop and request scope."
+      - "Behavior is ambiguous (route shape, region-routing keys, or response schema undecided)."
+      - "Any verify command fails twice after a fix attempt."
+      - "A real, valid summoner result in the SHIPPED flow can't be produced without a live key the tests can't fixture — keep client+route+util+fixtures, mark the live-data portion for T010, do NOT mock the user-facing result."
+      - "The role-slot mapper can't be made deterministic for empty/UNKNOWN/absent positions without inventing data — stop and flag for the T006/T007 reconstruction decision."
+    receipt:
+      result: done
+      changed_files:
+        - api/app/riot_client.py
+        - api/app/riot_models.py
+        - api/app/draft_reconstruction.py
+        - api/app/main.py
+        - api/requirements.txt
+        - api/tests/conftest.py
+        - api/tests/fixtures/__init__.py
+        - api/tests/fixtures/riot_account_v1.json
+        - api/tests/fixtures/riot_summoner_v4.json
+        - api/tests/test_riot_client.py
+        - api/tests/test_riot_summoner_route.py
+        - api/tests/test_draft_reconstruction.py
+        - frontend/src/lib/api.ts
+        - frontend/src/components/SummonerSearch.tsx
+        - frontend/src/app/search/page.tsx
+        - .env.example
+      commands:
+        - cmd: "python -m pytest api/tests/test_riot_client.py api/tests/test_riot_summoner_route.py api/tests/test_draft_reconstruction.py -q"
+          status: pass
+        - cmd: "python -m pytest -q"
+          status: pass
+        - cmd: "cd frontend && npm run lint"
+          status: pass
+        - cmd: "cd frontend && npm run build"
+          status: pass
+      pm_reverify: "PM independently re-ran the 27 new tests (pass) + full suite (80 passed). No regressions."
+      summary: "Riot search vertical slice. Backend: async RiotClient (account-v1 REGIONAL + summoner-v4 PLATFORM routing, X-Riot-Token, 8s timeout, status-carrying errors RiotKeyMissing/NotFound/RateLimit/Upstream); SummonerResult model; additive GET /riot/summoner (dep-injected overridable client; errors->404/429/503/502). SHARED api/app/draft_reconstruction.py (reverse championId->name index + reconstruct_draft w/ deterministic role fallback + fallback_used flag + DraftReconstructionError) built+tested, ready for T006/T007. httpx promoted to PROD dep. Frontend: searchSummoner + typed SummonerSearchError, SummonerSearch component, /search page hitting the REAL backend with loading/not-found/rate-limited/no-key/network states."
+      defers:
+        - "T010: live end-to-end with a real RIOT_API_KEY."
+        - "T005: wire selected player -> match history."
+        - "T006/T007: wire reconstruct_draft into match/spectator predict."
+      notes: "Role-slot fallback: honour teamPosition (first-writer-wins on dupes); missing/UNKNOWN/spectator-no-position fill remaining canonical slots by participant order; unknown championId or team!=5 -> DraftReconstructionError (no silent neutral default). OCE->SEA cluster for account-v1 (documented). Caught+fixed a real httpx.URL non-percent-encoding bug -> urllib.parse.quote + regression test. regional_for_platform() helper in riot_client is reused by T005/T006/T007."
+
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: >
+      Slice 2 — Match history (reuses RiotClient + regional_for_platform from T004). (1) Add match-v5 methods to
+      api/app/riot_client.py (REGIONAL routing): get_match_ids_by_puuid(puuid, platform, count, queue?) and
+      get_match_detail(matchId, platform) — get_match_detail is SHARED and reused by T006 (do not duplicate later).
+      (2) Add api/app/match_history.py: extract a per-player lightweight summary from a match detail (matchId,
+      the player's champion name via the draft_reconstruction reverse index, win bool, queueId, gameDuration,
+      gameCreation, gameMode). (3) Wire GET /riot/matches?puuid=&region=&count=&queue= in api/app/main.py returning
+      the player's recent match summaries (default-filter to SR 5v5 queues 400/420/430/440); errors->404/429/503/502.
+      (4) Frontend: getMatchHistory in lib/api.ts; a /games history screen listing real recent matches (champion,
+      W/L, queue, duration, date) with graceful empty/loading/error states; wire the /search "Select" action to
+      navigate to /games carrying puuid+gameName+tag+region. All Riot HTTP mocked via httpx.MockTransport; no live key.
+    allowed_files:
+      - "api/app/riot_client.py"
+      - "api/app/riot_models.py"
+      - "api/app/match_history.py"
+      - "api/app/main.py"
+      - "api/tests/test_match_history.py"
+      - "api/tests/test_riot_client_match.py"
+      - "api/tests/fixtures/riot_match_ids.json"
+      - "api/tests/fixtures/riot_match_detail.json"
+      - "frontend/src/lib/api.ts"
+      - "frontend/src/app/games/page.tsx"
+      - "frontend/src/components/MatchHistory.tsx"
+      - "frontend/src/app/search/page.tsx"
+    verify:
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer && python -m pytest api/tests/test_match_history.py api/tests/test_riot_client_match.py -q"
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer && python -m pytest -q"
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer/frontend && npm run lint"
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer/frontend && npm run build"
+    stop_if:
+      - "Need files outside allowed_files."
+      - "Behavior is ambiguous (history summary fields, queue filter, or selection-passing mechanism undecided)."
+      - "Any verify command fails twice after a fix attempt."
+      - "Match-v5 summary can't be extracted deterministically from the recorded fixture."
+    receipt:
+      result: done
+      changed_files:
+        - api/app/riot_client.py
+        - api/app/match_history.py
+        - api/app/riot_models.py
+        - api/app/main.py
+        - frontend/src/lib/api.ts
+        - frontend/src/app/games/page.tsx
+        - frontend/src/components/MatchHistory.tsx
+        - frontend/src/app/search/page.tsx
+        - api/tests/fixtures/riot_match_ids.json
+        - api/tests/fixtures/riot_match_detail.json
+        - api/tests/test_riot_client_match.py
+        - api/tests/test_match_history.py
+      commands:
+        - cmd: "python -m pytest api/tests/test_match_history.py api/tests/test_riot_client_match.py -q"
+          status: pass
+        - cmd: "python -m pytest -q"
+          status: pass
+        - cmd: "cd frontend && npm run lint"
+          status: pass
+        - cmd: "cd frontend && npm run build"
+          status: pass
+      pm_reverify: "PM re-ran full suite: 102 passed (was 80; +22 new). No regressions."
+      summary: "Match-v5 end-to-end. RiotClient gains get_match_ids_by_puuid (regional, start/count/queue, count clamped) + get_match_detail (returns the FULL Riot payload so T006 feeds info.participants straight into reconstruct_draft — no extra request). match_history.py pure summarizer (champion via draft_reconstruction reverse index; SR-5v5 filter {400,420,430,440}). GET /riot/matches (errors->404/429/503/502). Frontend: getMatchHistory + MatchSummary, MatchHistory.tsx (champion icon, W/L badge, queue label, mm:ss, date, 'Analyze->' row placeholder for T006), /games screen w/ Suspense + loading/empty/error. /search Select -> router.push('/games?puuid=&gameName=&tag=&region=')."
+      notes: "Queue filter: explicit queue= forwarded to Riot; else over-fetch (count*2 cap 40) + keep SR 5v5 after detail (match-v5 /ids can't OR queues). get_match_detail is SHARED — T006 must reuse, not duplicate. Selection via URL query (useSearchParams). Removed unused 'selected' state in search page. _get_json refactored to delegate to _get_json_any (existing dict callers unchanged)."
+
+  - id: T006
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: >
+      Slice 3 — Past-game model application (THE CORE). Compose existing pieces with NO duplication:
+      get_match_detail (T005) -> reconstruct_draft (T004; returns 10 blue_top..red_support names +
+      fallback_used + warnings) -> the SAME in-process draft-prediction logic backing POST /predict/draft.
+      (1) Refactor api/app/main.py minimally so the draft-prediction CORE is a callable function
+      (e.g. predict_draft_from_names(names_dict) -> PredictionResponse) used by BOTH the existing
+      POST /predict/draft route (behavior MUST stay identical) and the new path. (2) Add
+      api/app/match_prediction.py: build_match_prediction(match_detail, puuid) composing reconstruct_draft +
+      predict core + the ACTUAL result (winner side + whether the player's team won). Pure/testable. (3) Wire
+      GET /riot/match/{matchId}/prediction?puuid=&region= returning {match_id, draft, predicted
+      (winner/blue+red prob/confidence/model_used/model_accuracy), actual (winner_side, player_won),
+      fallback_used, warnings}. Errors: Riot->404/429/503/502; non-SR or a team without exactly 5 resolvable
+      champions -> 422 with clear detail. (4) Frontend: getMatchPrediction in lib/api.ts; a /match/[matchId]
+      screen (puuid+region from query) showing the reconstructed draft (both teams), PREDICTED win prob, the
+      ACTUAL result, a clear model-was-right/wrong indicator, and an "approximate lanes" note when fallback_used;
+      reuse ResultPanel where natural; wire the /games "Analyze->" row here. Riot HTTP mocked via
+      httpx.MockTransport; model via the existing api/tests model fixture; no live key.
+    allowed_files:
+      - "api/app/main.py"
+      - "api/app/match_prediction.py"
+      - "api/app/riot_models.py"
+      - "api/tests/test_match_prediction.py"
+      - "api/tests/fixtures/riot_match_detail.json"
+      - "frontend/src/lib/api.ts"
+      - "frontend/src/app/match/[matchId]/page.tsx"
+      - "frontend/src/components/MatchPrediction.tsx"
+      - "frontend/src/app/games/page.tsx"
+    verify:
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer && python -m pytest api/tests/test_match_prediction.py -q"
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer && python -m pytest -q"
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer/frontend && npm run lint"
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer/frontend && npm run build"
+    stop_if:
+      - "Need files outside allowed_files."
+      - "Refactoring the predict core would change POST /predict/draft behavior (existing tests must stay green) — stop."
+      - "Draft reconstruction / actual-result can't be validated against the fixture (team sides, player_won)."
+      - "Any verify command fails twice after a fix attempt."
+    receipt:
+      result: done
+      changed_files:
+        - api/app/main.py
+        - api/app/match_prediction.py
+        - api/app/riot_models.py
+        - api/tests/test_match_prediction.py
+        - frontend/src/lib/api.ts
+        - frontend/src/app/match/[matchId]/page.tsx
+        - frontend/src/app/games/page.tsx
+      commands:
+        - cmd: "python -m pytest api/tests/test_match_prediction.py -q"
+          status: pass
+        - cmd: "python -m pytest -q"
+          status: pass
+        - cmd: "cd frontend && npm run lint"
+          status: pass
+        - cmd: "cd frontend && npm run build"
+          status: pass
+      pm_reverify: "PM re-ran full suite: 117 passed (102 + 15 new). test_api.py 9/9 green -> POST /predict/draft behavior preserved after the core extraction."
+      summary: "THE CORE works end-to-end (fixtures). GET /riot/match/{matchId}/prediction: get_match_detail -> reconstruct_draft (10 names + fallback_used) -> predict core -> + ACTUAL result. Predict core extracted into predict_draft_from_names(names) used by BOTH the existing POST /predict/draft (byte-identical) and the new path. build_match_prediction (pure) orchestrates reconstruct->predict->actual, propagates DraftReconstructionError. Errors: Riot->404/429/503/502; non-SR/not-5v5->422. Frontend /match/[matchId] reuses ResultPanel, shows predicted-vs-actual + correct/incorrect banner + 'lanes approximate' when fallback_used; /games 'Analyze->' routes here."
+      notes: "winner_side from authoritative info.teams[].win (fallback to winning participant teamId); player_won = target puuid participant win. New RiotErrorKind 'unsupported' (422). Lazy import of predict_draft_from_names in match_prediction to avoid a circular import. Fixture left as-is (queueId 420, all 10 champs resolve)."
+
+  - id: T007
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: >
+      Slice 4 — Live-game (spectator) model application. Reuse everything: spectator-v5 active-game ->
+      reconstruct_draft (T004; spectator has NO teamPosition -> the documented participant-order fallback,
+      fallback_used=true) -> predict core predict_draft_from_names (T006). (1) api/app/riot_client.py: add
+      get_active_game_by_puuid(puuid, platform) (PLATFORM routing: GET /lol/spectator/v5/active-games/by-summoner/{puuid});
+      a Riot 404 means "not currently in a game" and MUST be a clean not-in-game signal (return None/sentinel), NOT a
+      hard error. (2) api/app/match_prediction.py: add build_live_prediction(current_game_info, puuid) composing
+      reconstruct_draft(participants) + predict core, returning {game_id, queue_id, draft, predicted, fallback_used,
+      warnings} (NO actual result — in progress). (3) api/app/main.py: wire GET /riot/live/{puuid}/prediction?region=
+      -> {in_game:false} (200) when not in a game; else {in_game:true, ...live prediction}. Map RiotRateLimited->429,
+      RiotKeyMissing->503, RiotUpstreamError->502, DraftReconstructionError (non-SR/not-5v5)->422. (4) Frontend:
+      getLivePrediction in lib/api.ts; a /live screen (puuid+region from query) — in a game: reconstructed draft +
+      PREDICTED win prob (reuse ResultPanel) + a clear "lanes approximate (spectator has no role data)" note; not in a
+      game: graceful "No live game right now" state; graceful loading/429/503/network. Add a "Check live game" entry
+      point on /games. Riot HTTP mocked via httpx.MockTransport; model via the api/tests fixture; no live key.
+    allowed_files:
+      - "api/app/riot_client.py"
+      - "api/app/match_prediction.py"
+      - "api/app/riot_models.py"
+      - "api/app/main.py"
+      - "api/tests/test_live_prediction.py"
+      - "api/tests/fixtures/riot_active_game.json"
+      - "frontend/src/lib/api.ts"
+      - "frontend/src/app/live/page.tsx"
+      - "frontend/src/components/LivePrediction.tsx"
+      - "frontend/src/app/games/page.tsx"
+    verify:
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer && python -m pytest api/tests/test_live_prediction.py -q"
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer && python -m pytest -q"
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer/frontend && npm run lint"
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer/frontend && npm run build"
+    stop_if:
+      - "Need files outside allowed_files."
+      - "spectator-v5 reconstruction can't be validated; do NOT fake a live game."
+      - "A Riot 404 (not in game) cannot be distinguished from a real error — stop and report."
+      - "Any verify command fails twice after a fix attempt."
+    receipt:
+      result: done
+      changed_files:
+        - api/app/riot_client.py
+        - api/app/match_prediction.py
+        - api/app/riot_models.py
+        - api/app/main.py
+        - api/tests/fixtures/riot_active_game.json
+        - api/tests/test_live_prediction.py
+        - frontend/src/lib/api.ts
+        - frontend/src/components/LivePrediction.tsx
+        - frontend/src/app/live/page.tsx
+        - frontend/src/app/games/page.tsx
+      commands:
+        - cmd: "python -m pytest api/tests/test_live_prediction.py -q"
+          status: pass
+        - cmd: "python -m pytest -q"
+          status: pass
+        - cmd: "cd frontend && npm run lint"
+          status: pass
+        - cmd: "cd frontend && npm run build"
+          status: pass
+      pm_reverify: "PM re-ran full suite: 129 passed (117 + 12 new). No regressions."
+      summary: "Live-game slice complete. spectator-v5 get_active_game_by_puuid (PLATFORM routing) -> reconstruct_draft (no teamPosition -> participant-order fallback, fallback_used=true) -> same predict core. GET /riot/live/{puuid}/prediction returns {in_game:false} (200) when not in a game; {in_game:true, draft, predicted, fallback_used} when in game; no actual (in progress). Frontend /live screen + getLivePrediction + LivePrediction component + 'Check live game' link on /games + graceful no-game/429/503/422 states."
+      notes: "404=not-in-game: get_active_game_by_puuid catches RiotNotFoundError -> None (documented sentinel); other statuses keep their error class so a real fault stays distinguishable. SR 5v5 {400,420,430,440} enforced; ARAM/others -> DraftReconstructionError -> 422."
+
+  - id: T008
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Phase review: confirm the full implemented flow (search -> select -> history -> past-game predicted-vs-actual -> live/no-game) is real-data + real-model wired (not mocked), backed by passing fixture tests, and ready for the operator's live-key walkthrough. Identify gaps before final audit."
+    inputs:
+      - "T004-T007 receipts"
+      - "Last verification"
+    constraints:
+      - "Do not implement."
+      - "Reject if any step is mocked or disconnected from the real API/model in the shipped flow."
+      - "A blocked live-key walkthrough (T010) does NOT block this phase review of the implementation."
+    expected_output:
+      - "Implementation-vs-oracle assessment"
+      - "Gaps / follow-up slices"
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      implementation_vs_oracle: "complete-and-real-wired; one entry-point nav gap; live walkthrough credential-gated."
+      no_mocks_in_shipped_flow: "confirmed — routes call the real RiotClient (main.py:606-610,684-689,757,846) + real predict core predict_draft_from_names (main.py:366,475; match_prediction.py:150,248); frontend hits ${NEXT_PUBLIC_API_BASE_URL} (api.ts:9-10,158,236,326,405). Mocks only as test dependency overrides (httpx.MockTransport)."
+      reconstruction_correct: "confirmed — teamId 100->blue/200->red (draft_reconstruction.py:40), champion NAMES via reverse index; past route ACTUAL from info.teams[].win + player_won-by-puuid (match_prediction.py:63-96); live omits actual (:254-261)."
+      graceful_states: "confirmed — no-key 503 / not-found 404 / rate-limited 429 / non-SR 422 / live not-in-game {in_game:false} map backend status -> typed frontend kind (api.ts kindForStatus:129-134)."
+      runtime_key_plumbing: "compose passthrough OK (docker-compose.yml:78 api uses env_file:.env; RIOT_* flow through). GAP is the LIVE .env: stale (only POSTGRES_*/ports, no RIOT_*). .env.example was updated, .env was not. Owned by T010 (credential gate); effect is graceful 503 by design."
+      frontend_nav: "GAP: /search orphaned — frontend/src/app/page.tsx (home) has NO link to /search and layout.tsx has NO nav; all /search links are downstream. Breaks the oracle's opening 'user opens the UI, searches'. -> T009."
+      gaps:
+        - "Search entry point undiscoverable from home -> T009 (frontend/src/app/page.tsx and/or layout.tsx)."
+        - "Live .env lacks RIOT_* keys (container reads .env, not .env.example) -> operator, T010 (already blocked)."
+        - "Optional: live-walkthrough runbook to de-risk T010 -> folded into T009."
+      oracle_status: "implementation complete + fixture-verified (129 passed); live real-data browser walkthrough gated on operator RIOT_API_KEY (T010). Blocked live walkthrough does NOT block this phase review."
+      spawned_tasks:
+        - T009
+
+  - id: T009
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: default
+    objective: >
+      Slice 5 — Make the feature discoverable + operator runbook (Judge T008 found /search is orphaned: home page
+      and layout have no link to it, breaking the oracle's opening "user opens the UI, searches"). (1) Add a shared,
+      discoverable nav to the player flow: a small header/nav in frontend/src/app/layout.tsx (links "Draft" -> / and
+      "Find my games" -> /search) shown on all pages, and/or a prominent CTA on frontend/src/app/page.tsx. Match the
+      existing styling; minimal + accessible. (2) Write a concise operator runbook docs/player-real-games-runbook.md:
+      how to run the live real-data walkthrough — add RIOT_API_KEY + RIOT_PLATFORM (+ RIOT_REGION) to the LIVE .env
+      (NOT just .env.example; the api container reads .env), `docker compose up`, then expected screens (search Riot
+      ID -> /games history -> Analyze a past game -> predicted-vs-actual -> Check live game), plus the OCE->sea routing
+      caveat and the "lanes approximate" note for spectator games.
+    allowed_files:
+      - "frontend/src/app/layout.tsx"
+      - "frontend/src/app/page.tsx"
+      - "docs/player-real-games-runbook.md"
+    verify:
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer/frontend && npm run lint"
+      - "cd /Users/elmanssouriaissam/Documents/datascientest/lol/MLOPS/MLOPS---LOL-draft-analyzer/frontend && npm run build"
+    stop_if:
+      - "Need files outside allowed_files."
+      - "Any verify command fails twice after a fix attempt."
+    receipt:
+      result: done
+      changed_files:
+        - frontend/src/app/layout.tsx
+        - frontend/src/app/page.tsx
+        - docs/player-real-games-runbook.md
+      commands:
+        - cmd: "cd frontend && npm run lint"
+          status: pass
+        - cmd: "cd frontend && npm run build"
+          status: pass
+      summary: "Fixed the orphaned /search route: shared accessible header nav in layout.tsx (Draft -> /, 'Find my games' -> /search) on all pages + an 'Analyze your real games ->' CTA on the home page. Added operator runbook docs/player-real-games-runbook.md (live .env key setup, docker compose up, search->games->match->live walkthrough, OCE->sea + lanes-approximate + ~24h dev-key caveats, 503=key-missing troubleshooting)."
+      notes: "Nav matches existing slate/blue palette + Geist + max-w-4xl; nav landmark + focus-visible rings for a11y. Additive, no app restructuring."
+
+  - id: T010
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: default
+    objective: "Operator credential: obtain a real RIOT_API_KEY (personal dev key suffices for verification) to run the live end-to-end oracle walkthrough (real summoner -> real history -> real predictions). BLOCKED pending operator-provided key. Does NOT block building/verifying the implementation with fixtures."
+    inputs:
+      - "Operator-provided RIOT_API_KEY + target region"
+    constraints:
+      - "Key stays server-side (.env, never committed, never NEXT_PUBLIC)."
+      - "Do not stop the goal for this; continue all fixture-verified local slices."
+    expected_output:
+      - "Live browser-walkthrough receipt against the oracle once the key is provided"
+    receipt:
+      result: done
+      summary: "LIVE WALKTHROUGH EXECUTED against real Riot data + the real prod model. Operator key obtained from the sibling project, wired server-side into .env (gitignored, never echoed/committed), api image rebuilt with the /riot/* routes (api/Dockerfile pip made resilient: --timeout 180 --retries 10), container recreated (models still loaded: draft XGBoost ~0.54)."
+      evidence:
+        - "Search: GET /riot/summoner Sheiden#1234 -> real puuid, level 212 (HTTP 200)."
+        - "History: GET /riot/matches -> real ranked SR games (Graves/Sylas/Jayce..., queue 420); browser /games showed ~20 real games."
+        - "Past-game: GET /riot/match/EUW1_7866601706/prediction -> draft reconstructed (Blue Zilean/Graves/Annie/Zeri/Renata vs Red Darius/RekSai/Cassiopeia/Twitch/Lulu, fallback_used=false), predicted Red 60.8%/Blue 39.2%, ACTUAL Blue won -> 'predicted incorrectly' (honest, ~54% model)."
+        - "Live: GET /riot/live/{puuid}/prediction -> in_game:false (not in a game) -> graceful 'No live game right now' UI."
+        - "Browser (Playwright): home nav -> /search -> Select -> /games -> /match predicted-vs-actual (real champion portraits) -> /live graceful. Screenshots: prg-1-search.png, prg-2-history.png, prg-3-prediction.png, prg-4-live-nogame.png (repo root)."
+      caveats:
+        - "Riot dev key from the sibling config expires ~24h; future runs regenerate at developer.riotgames.com and update .env."
+        - "spectator-v5 featured-games returns 403 for this key, so a player currently IN a game couldn't be discovered to show a LIVE prediction with picks; the live path is unit-tested and the active-games endpoint verified working (in_game:false on real data)."
+        - "Frontend ran via dev server on :3001 (grafana holds :3000); CORS_ALLOW_ORIGINS in .env updated to include :3001."
+
+  - id: T011
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: default
+    objective: >
+      Operator handoff / escalation. All credential-free work is complete and verified (slices T004-T007, nav T009,
+      Judge T008 approved, 129 backend tests + frontend lint/build green). The PM is escalating NOW for the one
+      remaining input: a real RIOT_API_KEY (+ platform/region). Await the operator: provide the key (add it to the
+      LIVE .env per docs/player-real-games-runbook.md) so T010's live walkthrough can run and T999 can record
+      full_outcome_complete: true — or choose to pause. No further safe local work advances the oracle.
+    inputs:
+      - "Operator-provided RIOT_API_KEY + platform (e.g. euw1) [+ region]"
+      - "docs/player-real-games-runbook.md"
+    constraints:
+      - "Do not stop the goal; this is an operator credential gate, not a defect."
+      - "Key stays server-side in .env; never commit it, never NEXT_PUBLIC."
+    expected_output:
+      - "Operator decision: provide key (-> unblock T010, run live walkthrough, then T999) or pause."
+    receipt:
+      result: done
+      summary: "Resolved: the operator pointed to the sibling project's Riot keys (datascientest-lol-draft_analyzer/src/collect_data/config.py). A valid key was obtained and wired server-side into .env (never echoed/committed); the live walkthrough then ran (see T010). Initial 403s were Riot's burst-throttle; the key validated (status-v4 200, account-v1 200) once paced."
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Final audit: does the shipped flow satisfy the original outcome — search+select real summoner, view real history, run models on real past + live games per the oracle?"
+    inputs:
+      - "All done task receipts"
+      - "Last verification"
+      - "Current dirty diff"
+    constraints:
+      - "Do not implement."
+      - "Reject completion if any required Worker work is still queued or active."
+      - "Reject completion if the broader original outcome still has safe local follow-up slices."
+      - "Reject stopping only because a slice needs owner input, credentials, a live game, or a policy decision."
+    expected_output:
+      - "complete | not_complete"
+      - "full_outcome_complete: true | false"
+      - "missing evidence"
+      - "next task if not complete"
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: "ORACLE MET. A user opens the web UI, searches+selects a real Riot ID (Sheiden#1234, lvl 212 EUW), sees real ranked match history (~20 games), and gets real draft-model predictions: the past game EUW1_7866601706 showed predicted win prob (Red 60.8% / Blue 39.2%) vs the ACTUAL result (Blue won) with a clear 'predicted incorrectly' indicator; the live endpoint returns a graceful no-game state on real data. All served by the real API + prod model (XGBoost ~0.54 acc), no mocks. Backed by 129 fixture tests + a live Playwright browser walkthrough (prg-1..prg-4 screenshots)."
+      evidence_map:
+        - "search -> T004 + live /riot/summoner (real 200, lvl 212)"
+        - "history -> T005 + live /riot/matches (real queue-420 games)"
+        - "past-game predicted-vs-actual -> T006 + live /riot/match/{id}/prediction (real)"
+        - "live -> T007 + live /riot/live/{puuid}/prediction (in_game:false graceful)"
+        - "discoverable nav -> T009 (browser-confirmed)"
+        - "no mocks in shipped flow -> T008 Judge review + live run"
+      residual:
+        - "A LIVE prediction with a player actively in a game wasn't visually shown (transient; spectator featured-games 403 for this key blocks discovery). Live path is implemented, unit-tested, and the active-games endpoint verified on real data."
+        - "Riot dev key expires ~24h -> operator refresh per docs/player-real-games-runbook.md."
+
+checks:
+  dirty_fingerprint: "GOAL COMPLETE. T004-T009 built; T010 live walkthrough executed vs real Riot + prod model; T999 audit full_outcome_complete:true. api image rebuilt (resilient pip), stack running; frontend dev on :3001."
+  last_verification:
+    result: pass
+    task: T010
+    commands:
+      - "python -m pytest -q -> 129 passed (fixture suite)"
+      - "LIVE: GET /riot/summoner Sheiden#1234 -> 200 lvl 212"
+      - "LIVE: GET /riot/match/EUW1_7866601706/prediction -> predicted Red 60.8% vs actual Blue won"
+      - "LIVE: GET /riot/live/{puuid}/prediction -> in_game:false graceful"
+      - "Browser walkthrough (Playwright) home->search->games->match->live: prg-1..prg-4.png"

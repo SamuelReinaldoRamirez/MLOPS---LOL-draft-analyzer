@@ -1,0 +1,133 @@
+{
+  "metadata": {
+    "dataVersion": "2",
+    "matchId": "EUW1_6000000001",
+    "participants": [
+      "AbCdEf_recorded-fixture-puuid-0123456789abcdef0123456789abcdef0123456789abcd",
+      "puuid-blue-jungle-0000000000000000000000000000000000000000000000000000000000",
+      "puuid-blue-mid-00000000000000000000000000000000000000000000000000000000000000",
+      "puuid-blue-adc-00000000000000000000000000000000000000000000000000000000000000",
+      "puuid-blue-support-0000000000000000000000000000000000000000000000000000000000",
+      "puuid-red-top-00000000000000000000000000000000000000000000000000000000000000",
+      "puuid-red-jungle-000000000000000000000000000000000000000000000000000000000000",
+      "puuid-red-mid-000000000000000000000000000000000000000000000000000000000000000",
+      "puuid-red-adc-000000000000000000000000000000000000000000000000000000000000000",
+      "puuid-red-support-00000000000000000000000000000000000000000000000000000000000"
+    ]
+  },
+  "info": {
+    "gameCreation": 1716600000000,
+    "gameDuration": 1834,
+    "gameId": 6000000001,
+    "gameMode": "CLASSIC",
+    "gameType": "MATCHED_GAME",
+    "mapId": 11,
+    "queueId": 420,
+    "participants": [
+      {
+        "puuid": "AbCdEf_recorded-fixture-puuid-0123456789abcdef0123456789abcdef0123456789abcd",
+        "championId": 266,
+        "championName": "Aatrox",
+        "teamId": 100,
+        "teamPosition": "TOP",
+        "win": true
+      },
+      {
+        "puuid": "puuid-blue-jungle-0000000000000000000000000000000000000000000000000000000000",
+        "championId": 64,
+        "championName": "LeeSin",
+        "teamId": 100,
+        "teamPosition": "JUNGLE",
+        "win": true
+      },
+      {
+        "puuid": "puuid-blue-mid-00000000000000000000000000000000000000000000000000000000000000",
+        "championId": 103,
+        "championName": "Ahri",
+        "teamId": 100,
+        "teamPosition": "MIDDLE",
+        "win": true
+      },
+      {
+        "puuid": "puuid-blue-adc-00000000000000000000000000000000000000000000000000000000000000",
+        "championId": 222,
+        "championName": "Jinx",
+        "teamId": 100,
+        "teamPosition": "BOTTOM",
+        "win": true
+      },
+      {
+        "puuid": "puuid-blue-support-0000000000000000000000000000000000000000000000000000000000",
+        "championId": 412,
+        "championName": "Thresh",
+        "teamId": 100,
+        "teamPosition": "UTILITY",
+        "win": true
+      },
+      {
+        "puuid": "puuid-red-top-00000000000000000000000000000000000000000000000000000000000000",
+        "championId": 86,
+        "championName": "Garen",
+        "teamId": 200,
+        "teamPosition": "TOP",
+        "win": false
+      },
+      {
+        "puuid": "puuid-red-jungle-000000000000000000000000000000000000000000000000000000000000",
+        "championId": 104,
+        "championName": "Graves",
+        "teamId": 200,
+        "teamPosition": "JUNGLE",
+        "win": false
+      },
+      {
+        "puuid": "puuid-red-mid-000000000000000000000000000000000000000000000000000000000000000",
+        "championId": 61,
+        "championName": "Orianna",
+        "teamId": 200,
+        "teamPosition": "MIDDLE",
+        "win": false
+      },
+      {
+        "puuid": "puuid-red-adc-000000000000000000000000000000000000000000000000000000000000000",
+        "championId": 145,
+        "championName": "Kaisa",
+        "teamId": 200,
+        "teamPosition": "BOTTOM",
+        "win": false
+      },
+      {
+        "puuid": "puuid-red-support-00000000000000000000000000000000000000000000000000000000000",
+        "championId": 89,
+        "championName": "Leona",
+        "teamId": 200,
+        "teamPosition": "UTILITY",
+        "win": false
+      }
+    ],
+    "teams": [
+      {
+        "teamId": 100,
+        "win": true,
+        "bans": [
+          { "championId": 157, "pickTurn": 1 },
+          { "championId": 238, "pickTurn": 2 },
+          { "championId": 555, "pickTurn": 3 },
+          { "championId": 91, "pickTurn": 4 },
+          { "championId": 105, "pickTurn": 5 }
+        ]
+      },
+      {
+        "teamId": 200,
+        "win": false,
+        "bans": [
+          { "championId": 64, "pickTurn": 6 },
+          { "championId": 7, "pickTurn": 7 },
+          { "championId": 84, "pickTurn": 8 },
+          { "championId": 24, "pickTurn": 9 },
+          { "championId": 67, "pickTurn": 10 }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Prometheus TSDB volume. ~5 GiB holds ~2 weeks of metrics at the defaults of
+# scrape_interval=15s for 3 jobs. Switch to remote_write (Thanos / Mimir /
+# Grafana Cloud) for long-term retention.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-data
+  namespace: lol-draft
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 5Gi

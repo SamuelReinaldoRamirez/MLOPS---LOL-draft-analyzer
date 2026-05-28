@@ -1,0 +1,100 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# FastAPI inference API — Deployment.
+#
+# - Pulls non-secret config from `lol-draft-config` (ConfigMap) and credentials
+#   from `lol-draft-secrets` via envFrom — no plaintext secrets in env: blocks.
+# - Mounts the shared `lol-draft-models` PVC at /app/models so all replicas
+#   serve the same trained .pkl bundles.
+# - Readiness + liveness probes hit `/health` (returns 503 until the DB is up).
+# - Pod-level securityContext: non-root, read-only root FS (the API only writes
+#   to /tmp and to the prometheus-instrumentator's in-memory store).
+# - 2 replicas baseline + HPA (see api-hpa.yaml) scales to ≤6 on CPU pressure.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lol-draft-api
+  namespace: lol-draft
+  labels:
+    app: lol-draft-api
+    component: api
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: lol-draft-api
+  template:
+    metadata:
+      labels:
+        app: lol-draft-api
+        component: api
+      annotations:
+        # Tell Prometheus pod-discovery scrapers to pick up /metrics directly
+        # (also redundantly scraped by the Prometheus ConfigMap as a job).
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8000"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: api
+          # Replace with your pushed image (ghcr.io/<org>/lol-draft-api:<tag>).
+          # The compose-built local image works in kind/minikube; in a remote
+          # cluster you MUST push to a registry first.
+          image: lol-draft-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: lol-draft-config
+            - secretRef:
+                name: lol-draft-secrets
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "384Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: models
+              mountPath: /app/models
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: lol-draft-models
+        - name: tmp
+          emptyDir: {}

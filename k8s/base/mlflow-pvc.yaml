@@ -1,0 +1,17 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# MLflow artifact store — persistent volume mounted at /mlflow/artifacts.
+# Mirrors the compose-named volume `lol_draft_mlflow_artifacts`. Backend store
+# (the metadata DB) lives in the Postgres StatefulSet under the `mlflow`
+# database, created idempotently by `mlflow/entrypoint.sh` at first boot.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mlflow-artifacts
+  namespace: lol-draft
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

@@ -1,0 +1,520 @@
+# GoalBuddy v2 state.yaml
+# Board truth lives here. goal.md is the editable charter; notes/ holds long receipts only.
+
+version: 2
+
+goal:
+  title: "Production web UI for the LoL draft models"
+  slug: "prod-web-ui"
+  kind: open_ended
+  tranche: "Continuous execution: map the prod API + deploy surface, then build the React/Next.js UI in vertical slices and deploy publicly, until a non-technical user can run the prod models through the clean UI."
+  status: active
+  oracle:
+    signal: "A non-technical user opens the deployed web UI, enters a draft, and receives a model prediction served by the real prod API/model path (not mocked)."
+    cadence: "after each Worker package and at final audit"
+    final_proof: "Browser walkthrough receipt of the deployed UI hitting the prod API + model version, plus passing frontend build/verify."
+  intake:
+    original_request: "je veux une interface utilisateur clean pour que n'importe qui puisse utiliser les modele en prod. Autre que le streamlit de presentation"
+    interpreted_outcome: "A clean React/Next.js production web UI, separate from the presentation Streamlit, letting any non-technical user run the deployed LoL draft models via the prod API and get predictions, reachable on the public web."
+    input_shape: open_ended
+    audience: "non-technical end users / general public"
+    authority: requested
+    proof_type: demo
+    completion_proof: "Non-technical user opens the public UI, submits a draft, gets a prod-served prediction; browser walkthrough passes."
+    likely_misfire: "Building another demo/Streamlit-style clone disconnected from the real prod API/model versioning, or a frontend whose API is not actually publicly reachable."
+    blind_spots_considered:
+      - "Prod API contract and model versioning (how api/ loads/serves models)."
+      - "CORS between the React/Next.js frontend and the FastAPI."
+      - "Public hosting + credentials + basic auth/abuse protection for a public app."
+      - "The model's real input/output shape (draft -> win prob / pick-ban recommendation)."
+    existing_plan_facts:
+      - "Repo already has api/, streamlit/ (presentation), training/, mlflow/, monitoring/, k8s/, docker-compose.yml."
+      - "Decision: stack = React/Next.js; access = public web; board = local."
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: live
+    url: "http://goalbuddy.localhost:41737/prod-web-ui/"
+    command: "npx goalbuddy board docs/goals/prod-web-ui"
+
+# ALL autonomous/credential-free work COMPLETE + verified: UI built, CORS proven end-to-end,
+# containerized (:8080), deploy runbook written, API image made PaaS-ready (model baking).
+# Only remaining work = the actual public deploy (T005), fully gated on operator credentials.
+# Active on T012 (final operator handoff).
+active_task: T012
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: default
+    objective: "Map the prod model serving path and API contract: what api/ exposes, request/response shapes, how models are loaded/versioned, and what a UI must send to get a prediction."
+    inputs:
+      - api/
+      - training/
+      - mlflow/
+      - README.md
+      - docker-compose.yml
+    constraints:
+      - "Read-only. Do not edit implementation files."
+      - "Prefer concrete file-path + endpoint evidence over generic advice."
+      - "Capture exact request/response JSON shape and any auth the API expects."
+    expected_output:
+      - "List of API endpoints relevant to predictions (paths, methods, request/response schema)."
+      - "How models are loaded/served and versioned (model registry / mlflow link)."
+      - "Existing run/serve commands and ports."
+      - "Gaps the UI will need (e.g., missing endpoint, CORS, champion list source)."
+    receipt:
+      result: done
+      note: notes/T001-api-contract.md
+      summary: "UI needs POST http://localhost:8000/predict/draft with 10 champion-name string fields (5 blue + 5 red by role) -> winner + blue/red win probabilities + confidence. Models are joblib .pkl on a shared Docker volume (MLflow not read at serve time)."
+      contract:
+        endpoint: "POST /predict/draft"
+        request: "blue_top..blue_support, red_top..red_support (10 champion-name strings)"
+        response: "winner, blue_win_probability, red_win_probability, confidence, model_used, model_accuracy"
+      blockers:
+        - "No CORS middleware in api/app/main.py -> browser cannot call API directly (need CORS or proxy)."
+        - "No endpoint serves the 172-champion list; only static api/app/champion_id_map.json."
+      notes:
+        - "No auth on any endpoint."
+        - "Unknown champion names degrade silently to neutral features -> UI must constrain to the 172 known names."
+        - "Streamlit loads .pkl directly (not via API), so it is not an HTTP-contract example."
+      evidence:
+        - api/app/main.py
+        - api/app/champion_id_map.json
+        - api/app/feature_builder.py
+
+  - id: T002
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: default
+    objective: "Map the deployment + public-access surface: how api/streamlit run (docker-compose, k8s/), env/config, CORS, and viable public hosting paths for BOTH the Next.js frontend and the API; note what credentials/access the operator must provide."
+    inputs:
+      - docker-compose.yml
+      - k8s/
+      - monitoring/
+      - .env.example
+      - api/
+    constraints:
+      - "Read-only. Do not edit implementation files or attempt to deploy."
+      - "Identify credential/access gaps explicitly; do not invent secrets."
+    expected_output:
+      - "Current local run topology and ports."
+      - "Candidate public hosting options for frontend + API (with tradeoffs)."
+      - "CORS / env / config changes the API will need to accept browser calls."
+      - "List of operator-provided inputs needed for a real public deploy."
+    receipt:
+      result: done
+      summary: "Stack is local docker-compose only (api:8000, streamlit:8501, postgres:5434, mlflow:5001, prometheus:9090, grafana:3000 on bridge net). k8s/ is an explicit non-production skeleton (ClusterIP, placeholder images, no Ingress/DB/models). No cloud/registry/Vercel config exists; no public deploy target today."
+      local_topology: "Browser MUST call http://localhost:8000/predict/draft; the compose service name 'api' resolves only inside the network. A Next.js container's server code could use http://api:8000, but client fetches still hit localhost:8000 -> CORS required."
+      cors_approach: "Add fastapi.middleware.cors.CORSMiddleware right after app=FastAPI() at api/app/main.py:32 (no new dependency; fastapi>=0.109.0). Read allowed origins from a new env var (e.g. CORS_ALLOW_ORIGINS), following the existing os.getenv pattern; extend .env.example."
+      existing_deploy_target: "Local docker-compose only; k8s skeleton not production (k8s/README.md, docs/PHASE3.md)."
+      hosting_options:
+        - "Next.js on Vercel/Netlify + API on PaaS (Render/Railway/Fly/Cloud Run): low ops, HTTPS auto, but cross-origin (CORS) + API must bake/mount model .pkl + managed Postgres."
+        - "Single VPS running the compose stack + Next.js behind Caddy/Nginx TLS: reuses repo as-is, one origin (CORS optional), but self-managed TLS/backups/public DB."
+        - "Complete the k8s skeleton (Ingress/TLS/DB/models PVC): most production-grade, highest effort; only if a cluster already exists."
+      operator_inputs_needed:
+        - "Public domain + DNS + TLS."
+        - "Cloud/host account + credentials for the chosen target."
+        - "Container registry + push creds for the API image."
+        - "Real secrets to replace .env placeholders (POSTGRES_PASSWORD, GRAFANA_ADMIN_PASSWORD)."
+        - "Postgres hosting decision + how model_*.pkl reach /app/models."
+        - "Decision: keep API unauthenticated public (CORS '*' ok) or add auth/rate-limiting; exact frontend URL(s) to whitelist."
+      evidence:
+        - docker-compose.yml
+        - api/app/main.py
+        - k8s/README.md
+        - .env.example
+
+  - id: T003
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Using Scout findings, choose the first safe build slice (likely: scaffold the Next.js app in its own dir + a working prediction screen wired to the real API contract against the local/dev API). Define the slice precisely."
+    inputs:
+      - "T001 receipt"
+      - "T002 receipt"
+    constraints:
+      - "Do not implement."
+      - "Pick the largest safe useful vertical slice with clear allowed_files, verify commands, and stop conditions."
+      - "Do not break the presentation Streamlit; keep the frontend isolated."
+    expected_output:
+      - "Decision"
+      - "Exact Worker objective"
+      - "allowed_files (e.g., a new frontend/ or web/ directory)"
+      - "verify (build/lint/typecheck/dev-run commands)"
+      - "stop_if"
+      - "Any blocked/deferred tasks (e.g., public deploy pending credentials)"
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      rationale: "Greenfield first slice with a fully-confirmed contract. Largest safe vertical slice = scaffold Next.js frontend/, wire a real draft->prediction screen to POST /predict/draft, bundle the 172-champion list, and add CORS in-slice (without CORS the browser cannot reach the API, so the oracle is unreachable). Public deploy deferred on credentials."
+      blockers_handling: "CORS: add CORSMiddleware after app=FastAPI() in api/app/main.py, origins from new CORS_ALLOW_ORIGINS env (default http://localhost:3000); no new dependency. Champion list: bundle a copy of champion_id_map.json into frontend/. Dedicated /champions endpoint deferred."
+      spawned_followups:
+        - "Public deploy (frontend+API) pending operator credentials -> new task T005."
+        - "Optional GET /champions endpoint."
+        - "UX polish: champion icons (Data Dragon CDN), loading states, accuracy framing."
+        - "Containerize frontend into docker-compose for single-origin local stack."
+
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Scaffold a Next.js app in a new frontend/ directory with one draft-input screen (10 champion pickers constrained to the 172 valid champions from a bundled copy of champion_id_map.json) that POSTs to http://localhost:8000/predict/draft (base URL via NEXT_PUBLIC_API_BASE_URL) and renders winner + blue/red win probabilities + confidence + model_accuracy, with a graceful API-unreachable error state; and add CORSMiddleware to api/app/main.py reading allowed origins from a new CORS_ALLOW_ORIGINS env var (documented in .env.example)."
+    allowed_files:
+      - "frontend/**"
+      - "api/app/main.py"
+      - ".env.example"
+    verify:
+      - "cd frontend && npm install"
+      - "cd frontend && npm run lint"
+      - "cd frontend && npm run build"
+      - "docker compose up -d api && curl POST /predict/draft (10-champ sample)"
+      - "python3 -c ast.parse(api/app/main.py)"
+    stop_if:
+      - "Need to write files outside allowed_files (e.g., docker-compose.yml, k8s/, streamlit/)."
+      - "Adding CORS requires a new Python dependency or fastapi version bump (it should not)."
+      - "The API does not return the documented PredictionResponse shape, or the real contract differs from the T001 note."
+      - "npm run build or lint fails twice after a fix attempt."
+      - "The slice would require touching streamlit/ or risks breaking the presentation app."
+    receipt:
+      result: done
+      changed_files:
+        - "frontend/src/app/page.tsx"
+        - "frontend/src/app/layout.tsx"
+        - "frontend/src/app/globals.css"
+        - "frontend/src/components/ChampionPicker.tsx"
+        - "frontend/src/components/ResultPanel.tsx"
+        - "frontend/src/lib/api.ts"
+        - "frontend/src/data/champions.ts"
+        - "frontend/src/data/champion_id_map.json"
+        - "frontend/.env.local.example"
+        - "frontend/README.md"
+        - "frontend/package.json"
+        - "api/app/main.py"
+        - ".env.example"
+      commands:
+        - cmd: "cd frontend && npm install"
+          status: pass
+        - cmd: "cd frontend && npm run lint"
+          status: pass
+        - cmd: "cd frontend && npm run build"
+          status: pass
+        - cmd: "python3 -c ast.parse(api/app/main.py)"
+          status: pass
+        - cmd: "docker compose up -d api + curl POST /predict/draft"
+          status: pass
+      summary: "Built an isolated Next.js UI: one clean draft board with 10 searchable champion pickers constrained to the 172 bundled champions, Predict disabled until all 10 chosen, loading + friendly error states. Posts to {NEXT_PUBLIC_API_BASE_URL|localhost:8000}/predict/draft and renders winner, blue/red win-prob bar, confidence, model accuracy + honest baseline note. Added CORSMiddleware to api/app/main.py (env-driven origins, no new dep)."
+      notes:
+        - "Live curl PASSED: {winner: Blue Team, blue 0.599, red 0.401, confidence 0.599, model_accuracy 0.5398}."
+        - "GAP: the live-check API container used the pre-existing image (pre-CORS), so browser-level CORS is NOT yet proven; CORS source verified by ast.parse and applies on next API image rebuild -> see T006."
+        - "Pinned next to 14.2.35 (patched) to clear create-next-app advisory. Frontend env doc: frontend/.env.local.example."
+
+  - id: T006
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: default
+    objective: "Prove the oracle locally (verification, no code changes): rebuild the API image so the CORS middleware is live, start the API, and confirm the browser->API path works end-to-end (CORS preflight/headers present for Origin http://localhost:3000, and a draft POST returns a prediction)."
+    verify:
+      - "docker compose build api && docker compose up -d api"
+      - "curl -i -X OPTIONS http://localhost:8000/predict/draft -H 'Origin: http://localhost:3000' -H 'Access-Control-Request-Method: POST' (expect access-control-allow-origin header)"
+      - "curl -s -i -X POST http://localhost:8000/predict/draft -H 'Origin: http://localhost:3000' -H 'Content-Type: application/json' -d '<10-champ sample>' (expect 200 + access-control-allow-origin + prediction JSON)"
+      - "Optional: run frontend dev + browser walkthrough (Playwright) to confirm no CORS error in console and a prediction renders."
+    stop_if:
+      - "Docker is unavailable in this environment (record skipped + why; do not fail the goal on infra)."
+      - "A fix would require files outside allowed_files."
+      - "Verification fails twice after a fix attempt."
+    receipt:
+      result: done
+      commands:
+        - cmd: "docker compose build api"
+          status: pass
+        - cmd: "docker compose up -d api (healthy in 3s)"
+          status: pass
+        - cmd: "OPTIONS preflight w/ Origin localhost:3000 -> access-control-allow-origin: http://localhost:3000"
+          status: pass
+        - cmd: "POST /predict/draft w/ Origin localhost:3000 -> 200 + allow-origin header + winner Blue 0.599/red 0.401"
+          status: pass
+      summary: "Rebuilt the API image so CORS is live and proved the browser->API path end-to-end at the HTTP level: preflight and actual POST both return access-control-allow-origin for http://localhost:3000, and the POST returns a valid prediction. No code changes needed; the T004 CORS edit works."
+      notes:
+        - "Local-dev gotcha: host port 3000 is occupied by Grafana (lol_draft_grafana), which is Next.js's default dev port. To run the frontend locally, free 3000 (stop grafana) OR run Next on another port (e.g. 3001) and set CORS_ALLOW_ORIGINS / NEXT_PUBLIC_API_BASE_URL accordingly. Does not affect public deploy."
+        - "A full visual Playwright browser walkthrough was not run (HTTP-level CORS + prediction + frontend build are proven); can be added if desired."
+
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: blocked
+    reasoning_hint: default
+    objective: "Public deployment via the CHOSEN target = Vercel (frontend) + PaaS API (Render/Railway/Fly/Cloud Run): deploy frontend to Vercel with NEXT_PUBLIC_API_BASE_URL set to the public API URL; deploy the API container to a PaaS with managed Postgres + model .pkl delivery; set CORS_ALLOW_ORIGINS to the Vercel URL; HTTPS. BLOCKED pending operator-provided credentials."
+    allowed_files: []
+    verify: []
+    stop_if:
+      - "Operator credentials/hosting decision not yet provided."
+    receipt:
+      result: blocked
+      blocked_reason: "Public deployment requires operator-only inputs that no local work can substitute: (1) hosting-target decision (managed frontend + PaaS API vs single VPS docker-compose+reverse-proxy vs completing the k8s skeleton), (2) a public domain + DNS + TLS, (3) cloud/host account credentials, (4) a container registry + push creds for the API image, (5) real secrets to replace .env placeholders, (6) Postgres hosting + how model_*.pkl reach /app/models, (7) the public-API auth/rate-limit decision (API is currently unauthenticated). Awaiting operator choice; see escalation question."
+      next_action: "Operator selects a hosting target and provides credentials; then this task unblocks into a concrete deploy plan + CORS_ALLOW_ORIGINS set to the public frontend URL."
+
+  - id: T007
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: default
+    objective: "Drive the go-live path. Immediate input: operator deployment decision (which the PM is escalating now). Based on the answer, do the chosen safe local work and/or unblock T005: (a) containerize the frontend + add it to docker-compose so the whole stack runs with one command at a single origin (no credentials needed); (b) capture a one-shot Playwright browser walkthrough to fully close the local visual oracle; (c) prepare platform deploy config (Vercel/PaaS/VPS/k8s) and set CORS_ALLOW_ORIGINS to the public URL once credentials are provided."
+    inputs:
+      - "T999 audit receipt"
+      - "T002 deploy-surface receipt"
+      - "Operator deployment decision (pending)"
+    constraints:
+      - "Local containerization + browser walkthrough need no operator input and are safe to do now if chosen."
+      - "Actual public deploy needs operator credentials (T005)."
+    expected_output:
+      - "Chosen path recorded"
+      - "Local artifacts built/verified, or T005 unblocked with a concrete deploy plan"
+    receipt:
+      result: done
+      decision: "Operator chose: containerize the frontend into docker-compose now (safe, no credentials). Eventual public hosting target = Vercel (frontend) + PaaS API (Render/Railway/Fly/Cloud Run)."
+      rationale: "Local containerization gives immediate 'docker compose up serves the UI' value and mirrors the chosen Vercel+PaaS cross-origin architecture (UI and API on separate origins, CORS on), so it is a clean stepping stone rather than throwaway work."
+      spawned_tasks:
+        - T008
+      notes:
+        - "Public deploy (T005) stays blocked on operator credentials; chosen target recorded there."
+
+  - id: T008
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Containerize the Next.js frontend and add it to docker-compose so `docker compose up` serves the UI alongside the API. Cross-origin (mirrors the chosen Vercel+PaaS prod model): UI served on a free host port, browser calls the API at its host URL, CORS allows the UI origin."
+    allowed_files:
+      - "frontend/**"
+      - "docker-compose.yml"
+      - ".env.example"
+    verify:
+      - "docker compose build frontend"
+      - "docker compose up -d frontend && curl -sf -o /dev/null -w '%{http_code}' http://localhost:8080  (expect 200)"
+      - "curl -i -X OPTIONS http://localhost:8000/predict/draft -H 'Origin: http://localhost:8080' -H 'Access-Control-Request-Method: POST'  (expect access-control-allow-origin: http://localhost:8080)"
+      - "cd frontend && npm run build  (still passes)"
+    stop_if:
+      - "Need files outside allowed_files (e.g., api/app/, k8s/, streamlit/)."
+      - "A free host port cannot be chosen without conflicting (3000=grafana, 8000=api, 8501=streamlit, 5001=mlflow, 9090=prometheus, 5434=db)."
+      - "docker compose build/up fails twice after a fix attempt."
+    receipt:
+      result: done
+      changed_files:
+        - "frontend/Dockerfile"
+        - "frontend/.dockerignore"
+        - "frontend/next.config.mjs"
+        - "frontend/public/.gitkeep"
+        - "frontend/README.md"
+        - "docker-compose.yml"
+        - ".env.example"
+      commands:
+        - cmd: "cd frontend && npm run build (standalone)"
+          status: pass
+        - cmd: "docker compose build frontend"
+          status: pass
+        - cmd: "docker compose up -d frontend && curl http://localhost:8080"
+          status: pass
+        - cmd: "OPTIONS /predict/draft Origin localhost:8080 -> access-control-allow-origin: http://localhost:8080"
+          status: pass
+        - cmd: "curl http://localhost:8080 | grep draft|champion|predict"
+          status: pass
+      summary: "Containerized the Next.js UI (multi-stage, output:'standalone', node:20-alpine, non-root, server.js on container 3000). Added a frontend service to docker-compose.yml on the existing network, host 8080->3000, depends_on api, NEXT_PUBLIC_API_BASE_URL build arg (default http://localhost:8000, the browser-reachable host URL). Extended api service env with CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS:-http://localhost:8080,http://localhost:3000} and updated .env.example. Verified UI serves 200 and API preflight allows the UI origin."
+      notes:
+        - "Use docker compose up -d --build frontend then open http://localhost:8080. Browser calls the API at NEXT_PUBLIC_API_BASE_URL (http://localhost:8000), so api must be running with CORS allowing the UI origin."
+        - "Added frontend/public/.gitkeep so the standalone COPY public step is robust."
+        - "Worker stopped the frontend container after verification; api/db left running."
+
+  - id: T009
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: default
+    objective: "Write a concrete, credential-free deploy runbook for the chosen target (Vercel for the frontend + a PaaS for the API container), so the operator can complete the public deploy mechanically and so T005 only needs credentials."
+    allowed_files:
+      - "frontend/DEPLOY.md"
+      - "frontend/vercel.json"
+      - "docs/**"
+    verify:
+      - "Runbook lists exact steps + the env vars to set (NEXT_PUBLIC_API_BASE_URL on Vercel, CORS_ALLOW_ORIGINS on the API) and the operator inputs required."
+    stop_if:
+      - "Need files outside allowed_files (no code changes; docs/config only)."
+      - "Would require real secrets or credentials (it must not)."
+    receipt:
+      result: done
+      changed_files:
+        - "frontend/DEPLOY.md"
+        - "frontend/vercel.json"
+      commands:
+        - cmd: "python3 json.load(frontend/vercel.json) validate"
+          status: pass
+        - cmd: "re-read DEPLOY.md against criteria a/b/c/d"
+          status: pass
+      summary: "Wrote frontend/DEPLOY.md: a non-DevOps runbook to deploy the UI on Vercel + the API container on a PaaS (Render worked example; Railway/Fly/Cloud Run analogous). Covers architecture+diagram, full operator-input checklist, API deploy (env vars, model .pkl delivery), Vercel deploy, CORS wiring, a prominent unauthenticated-API security callout, and a verification checklist. Added a minimal vercel.json (framework=nextjs)."
+      notes:
+        - "Confirmed API env var names from api/app/main.py: CORS_ALLOW_ORIGINS, MODELS_DIR (/app/models), POSTGRES_HOST/PORT/DB/USER/PASSWORD; MLflow no-op for serving."
+        - "FOLLOW-UP for the actual deploy (part of T005): baking model_*.pkl into the API image needs an api/Dockerfile change (currently copies only app/); the compose models volume does not exist on a PaaS."
+
+  - id: T010
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: default
+    objective: "Operator handoff: all credential-free local work is done and verified (UI built + CORS proven + containerized at :8080 + deploy runbook at frontend/DEPLOY.md). Public deploy via Vercel+PaaS (T005) is the only remaining work and needs operator-provided credentials + an api/Dockerfile model-baking change. Await operator: provide credentials to proceed, authorize the api/Dockerfile prep, or pause."
+    inputs:
+      - "T999 audit + T008 containerization + T009 runbook receipts"
+      - "Operator credentials / next instruction (pending)"
+    constraints:
+      - "Do not deploy or create external resources without operator credentials/authorization."
+    expected_output:
+      - "Operator decision recorded"
+      - "On credentials: unblock + execute T005; or on authorization: do the api/Dockerfile model-baking prep"
+    receipt:
+      result: done
+      decision: "Operator chose: prep the API for PaaS now (credential-free api/Dockerfile model-baking). No deploy yet. Vercel+PaaS credentials deferred (T005 stays blocked)."
+      finding: "No .pkl files exist in the repo; models are sourced from an external sibling project (../datascientest-lol-draft_analyzer/models) via scripts/seed_models.sh into a docker volume, and api/Dockerfile copies only app/. So PaaS-readiness = make the image bake model_*.pkl staged into the build context."
+      spawned_tasks:
+        - T011
+
+  - id: T011
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Make the API image PaaS-ready by baking model_*.pkl from the build context into /app/models, without breaking local docker-compose (which still uses the seeded volume). Add a build-context models dir + ignore rules + a staging helper, and document the flow."
+    allowed_files:
+      - "api/Dockerfile"
+      - "api/.dockerignore"
+      - "api/models/**"
+      - ".gitignore"
+      - "scripts/**"
+      - "frontend/DEPLOY.md"
+    verify:
+      - "docker compose build api  (still succeeds with the new COPY)"
+      - "docker compose up -d api && curl -sf http://localhost:8000/health  (local still healthy; volume-seeded models still work)"
+      - "If source models are stageable: stage them, rebuild, and confirm a fresh container (no volume) has /app/models populated."
+    stop_if:
+      - "Need files outside allowed_files (especially do NOT change docker-compose.yml volume behavior or api/app/ code)."
+      - "The change breaks the local volume-based model loading."
+      - "docker build fails twice after a fix attempt."
+    receipt:
+      result: done
+      changed_files:
+        - "api/Dockerfile"
+        - "api/.dockerignore"
+        - "api/models/.gitkeep"
+        - ".gitignore"
+        - "scripts/stage_models_for_image.sh"
+        - "frontend/DEPLOY.md"
+      commands:
+        - cmd: "docker compose build api (api/models = .gitkeep only)"
+          status: pass
+        - cmd: "docker compose up -d api && curl -sf http://localhost:8000/health"
+          status: pass
+        - cmd: "docker run --entrypoint ls <api-image> -la /app/models (dir present in image)"
+          status: pass
+        - cmd: "bash scripts/stage_models_for_image.sh (staged 5 model_*.pkl from sibling project; baked; then cleaned)"
+          status: pass
+        - cmd: "bash -n scripts/stage_models_for_image.sh"
+          status: pass
+      summary: "Made the API image PaaS-ready: added `COPY models/ /app/models/` to api/Dockerfile and a tracked api/models/.gitkeep so any model_*.pkl staged into the build context is baked into the image (for hosts with no volume). Added api/.dockerignore (does NOT exclude models/*.pkl), .gitignore rules (track .gitkeep, ignore staged binaries), scripts/stage_models_for_image.sh (mirrors seed_models.sh source-detection), and documented the bake flow in frontend/DEPLOY.md. Local unchanged: docker-compose volume still shadows /app/models and seed_models.sh still seeds it; /health healthy."
+      notes:
+        - "Source models were stageable (found ../../datascientest-lol-draft_analyzer/models); 5 baked then cleaned to .gitkeep-only baseline. No binaries committed."
+        - "Built image: mlops---lol-draft-analyzer-api:latest."
+
+  - id: T012
+    type: pm
+    assignee: PM
+    status: active
+    reasoning_hint: default
+    objective: "FINAL operator handoff. All autonomous, credential-free work is complete and verified: clean Next.js UI wired to the real prod model, CORS proven end-to-end, containerized into docker-compose (UI at :8080), Vercel+PaaS deploy runbook (frontend/DEPLOY.md), and the API image made PaaS-ready (model baking via scripts/stage_models_for_image.sh). The ONLY remaining work is the actual public deploy (T005), which is fully gated on operator-provided credentials/accounts (Vercel, PaaS, managed Postgres, optional domain) and the public-API auth decision. Await operator: provide credentials to execute T005, or pause."
+    inputs:
+      - "T008 containerization + T009 runbook + T011 PaaS-prep receipts"
+      - "Operator credentials / next instruction (pending)"
+    constraints:
+      - "Do not deploy or create external/public resources without operator credentials and explicit authorization."
+    expected_output:
+      - "Operator decision recorded"
+      - "On credentials: unblock + execute T005 (deploy) and set CORS_ALLOW_ORIGINS to the public Vercel URL"
+    receipt: null
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Audit whether the built UI satisfies the original outcome: can a non-technical user run the prod models through the clean web UI per the oracle?"
+    inputs:
+      - "All done task receipts"
+      - "Last verification"
+      - "Current dirty diff"
+    constraints:
+      - "Do not implement."
+      - "Reject completion if required Worker work is still queued or active."
+      - "Reject completion if the UI is not wired to the real prod API/model path."
+      - "Reject completion if the broader outcome still has safe local follow-up slices."
+      - "Public-deploy blocked on credentials is a per-task block, not goal completion; require a workaround/follow-up task."
+    expected_output:
+      - "complete | not_complete"
+      - "full_outcome_complete: true | false"
+      - "missing evidence"
+      - "next task if not complete"
+    receipt:
+      result: done
+      decision: not_complete
+      status: not_complete
+      full_outcome_complete: false
+      local_build_outcome: complete
+      rationale: "Verified against repo: frontend/ has a complete draft->prediction screen (page.tsx pickers + loading/error/disabled states, lib/api.ts POSTs to /predict/draft, 172-champion bundle); CORSMiddleware live at api/app/main.py:38; .env.example:19 has CORS_ALLOW_ORIGINS; streamlit/ untouched. /predict/draft (main.py:354) loads the real draft .pkl via _load_model('draft') and runs inference -- NOT mocked. T006 proved browser->API end-to-end at HTTP level. Local oracle satisfied. Full outcome unmet because the oracle requires a DEPLOYED public UI and T005 is blocked on operator credentials; no visual browser walkthrough run."
+      verified_checks:
+        - "frontend/src/app/page.tsx prediction screen + states; src/lib/api.ts POST /predict/draft; src/data/champion_id_map.json (172)"
+        - "CORSMiddleware at api/app/main.py:38 (origins from CORS_ALLOW_ORIGINS env)"
+        - ".env.example:19 CORS_ALLOW_ORIGINS=http://localhost:3000"
+        - "streamlit/ untracked + unmodified"
+        - "/predict/draft serves the real draft .pkl (real prod path, not mocked)"
+      missing_evidence:
+        - "No public deployment / public URL / HTTPS (T005 blocked on operator credentials)."
+        - "No visual browser walkthrough; proof is HTTP-level curl only (host port 3000 occupied by Grafana locally)."
+        - "Public-API auth/rate-limit decision unmade."
+      next_task: "Operator decision: choose a hosting target and provide credentials to unblock T005."
+      recommendation: "Approve this tranche (clean UI built + wired to real prod model path, proven locally end-to-end). Do NOT mark the goal complete; the 'in prod, public web' half needs the operator to choose a host and supply credentials in T005."
+
+checks:
+  dirty_fingerprint: unknown
+  last_verification:
+    result: unknown
+    task: null
+    commands: []
