@@ -1,0 +1,37 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Files DVC should NOT track as deps/outs. These never affect the hash of any
+# stage and never trigger re-runs of `dvc repro`.
+# See https://dvc.org/doc/user-guide/dvcignore
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Python build artefacts and caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtual envs
+.venv/
+venv/
+
+# OS / IDE noise
+.DS_Store
+.idea/
+.vscode/
+
+# Docker volumes / local caches mounted into the tree
+pgdata/
+
+# MLflow local artifacts (versioned by MLflow itself, not DVC)
+mlruns/
+mlflow_artifacts/
+
+# Local DVC remote (`.dvc-storage`) — pushed/pulled via `dvc push|pull` but
+# never re-hashed as a stage dep.
+.dvc-storage/
+
+# Streamlit screenshots used in the README
+prg-*.png
+.playwright-mcp/

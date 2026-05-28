@@ -1,0 +1,32 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Root kustomization — `kubectl apply -k k8s` (or `make k8s-apply`) installs:
+#
+#   1. namespace + ConfigMap + Secret + shared PVCs
+#   2. Postgres StatefulSet + Service
+#   3. API Deployment + Service + HPA
+#   4. Streamlit Deployment + Service + HPA
+#   5. MLflow Deployment + Service
+#   6. Prometheus + Grafana (with auto-provisioned datasource + dashboards)
+#   7. Ingress (TLS via cert-manager) + NetworkPolicies (default-deny inside ns)
+#
+# Pre-flight (per cluster, not in this kustomize tree):
+#   - install ingress-nginx + cert-manager,
+#   - create a ClusterIssuer `letsencrypt-prod`,
+#   - push images to a registry and update `image:` in each Deployment (or
+#     use an overlay with `images:` to retag).
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: lol-draft
+
+resources:
+  - base
+  - monitoring
+  - ingress
+
+labels:
+  - includeSelectors: false
+    pairs:
+      app.kubernetes.io/part-of: lol-draft-predictor
+      app.kubernetes.io/managed-by: kustomize

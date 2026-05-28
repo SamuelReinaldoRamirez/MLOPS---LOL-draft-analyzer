@@ -1,0 +1,13 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Namespace — isolates every LoL Draft Predictor resource.
+# Pinned by `metadata.namespace` in every other manifest + `namespace:` in the
+# root kustomization. NetworkPolicy uses this label to scope intra-namespace
+# allow rules.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lol-draft
+  labels:
+    name: lol-draft
+    app.kubernetes.io/part-of: lol-draft-predictor

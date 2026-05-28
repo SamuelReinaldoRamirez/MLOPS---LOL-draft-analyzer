@@ -1,0 +1,1716 @@
+{
+  "metadata": {
+    "dataVersion": "2",
+    "matchId": "EUW1_7000000002",
+    "participants": [
+      "p1",
+      "p2",
+      "p3",
+      "p4",
+      "p5",
+      "p6",
+      "p7",
+      "p8",
+      "p9",
+      "p10"
+    ]
+  },
+  "info": {
+    "frameInterval": 60000,
+    "gameId": 7000000002,
+    "frames": [
+      {
+        "timestamp": 0,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 510,
+            "level": 1,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 520,
+            "level": 1,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 530,
+            "level": 1,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 540,
+            "level": 1,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 550,
+            "level": 1,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 510,
+            "level": 1,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 520,
+            "level": 1,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 530,
+            "level": 1,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 540,
+            "level": 1,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 550,
+            "level": 1,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": []
+      },
+      {
+        "timestamp": 60000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 860,
+            "level": 1,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 870,
+            "level": 1,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 880,
+            "level": 1,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 890,
+            "level": 1,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 900,
+            "level": 1,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 810,
+            "level": 1,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 820,
+            "level": 1,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 830,
+            "level": 1,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 840,
+            "level": 1,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 850,
+            "level": 1,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": []
+      },
+      {
+        "timestamp": 120000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 1210,
+            "level": 2,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 1220,
+            "level": 2,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 1230,
+            "level": 2,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 1240,
+            "level": 2,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 1250,
+            "level": 2,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 1110,
+            "level": 2,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 1120,
+            "level": 2,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 1130,
+            "level": 2,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 1140,
+            "level": 2,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 1150,
+            "level": 2,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": []
+      },
+      {
+        "timestamp": 180000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 1560,
+            "level": 2,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 1570,
+            "level": 2,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 1580,
+            "level": 2,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 1590,
+            "level": 2,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 1600,
+            "level": 2,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 1410,
+            "level": 2,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 1420,
+            "level": 2,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 1430,
+            "level": 2,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 1440,
+            "level": 2,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 1450,
+            "level": 2,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": [
+          {
+            "type": "CHAMPION_KILL",
+            "timestamp": 150000,
+            "killerId": 3,
+            "victimId": 8,
+            "position": {
+              "x": 5000,
+              "y": 6000
+            }
+          }
+        ]
+      },
+      {
+        "timestamp": 240000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 1910,
+            "level": 3,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 1920,
+            "level": 3,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 1930,
+            "level": 3,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 1940,
+            "level": 3,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 1950,
+            "level": 3,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 1710,
+            "level": 3,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 1720,
+            "level": 3,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 1730,
+            "level": 3,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 1740,
+            "level": 3,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 1750,
+            "level": 3,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": [
+          {
+            "type": "CHAMPION_KILL",
+            "timestamp": 220000,
+            "killerId": 7,
+            "victimId": 2,
+            "position": {
+              "x": 5200,
+              "y": 6100
+            }
+          }
+        ]
+      },
+      {
+        "timestamp": 300000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 2260,
+            "level": 3,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 2270,
+            "level": 3,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 2280,
+            "level": 3,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 2290,
+            "level": 3,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 2300,
+            "level": 3,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 2010,
+            "level": 3,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 2020,
+            "level": 3,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 2030,
+            "level": 3,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 2040,
+            "level": 3,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 2050,
+            "level": 3,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": []
+      },
+      {
+        "timestamp": 360000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 2610,
+            "level": 4,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 2620,
+            "level": 4,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 2630,
+            "level": 4,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 2640,
+            "level": 4,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 2650,
+            "level": 4,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 2310,
+            "level": 4,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 2320,
+            "level": 4,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 2330,
+            "level": 4,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 2340,
+            "level": 4,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 2350,
+            "level": 4,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": []
+      },
+      {
+        "timestamp": 420000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 2960,
+            "level": 4,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 2970,
+            "level": 4,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 2980,
+            "level": 4,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 2990,
+            "level": 4,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 3000,
+            "level": 4,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 2610,
+            "level": 4,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 2620,
+            "level": 4,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 2630,
+            "level": 4,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 2640,
+            "level": 4,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 2650,
+            "level": 4,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": []
+      },
+      {
+        "timestamp": 480000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 3310,
+            "level": 5,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 3320,
+            "level": 5,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 3330,
+            "level": 5,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 3340,
+            "level": 5,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 3350,
+            "level": 5,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 2910,
+            "level": 5,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 2920,
+            "level": 5,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 2930,
+            "level": 5,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 2940,
+            "level": 5,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 2950,
+            "level": 5,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": [
+          {
+            "type": "ELITE_MONSTER_KILL",
+            "timestamp": 510000,
+            "killerId": 9,
+            "killerTeamId": 200,
+            "monsterType": "DRAGON",
+            "monsterSubType": "FIRE_DRAGON",
+            "position": {
+              "x": 9800,
+              "y": 4400
+            }
+          }
+        ]
+      },
+      {
+        "timestamp": 540000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 3660,
+            "level": 5,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 3670,
+            "level": 5,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 3680,
+            "level": 5,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 3690,
+            "level": 5,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 3700,
+            "level": 5,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 3210,
+            "level": 5,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 3220,
+            "level": 5,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 3230,
+            "level": 5,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 3240,
+            "level": 5,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 3250,
+            "level": 5,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": [
+          {
+            "type": "ELITE_MONSTER_KILL",
+            "timestamp": 570000,
+            "killerId": 2,
+            "monsterType": "RIFTHERALD",
+            "position": {
+              "x": 5000,
+              "y": 10000
+            }
+          }
+        ]
+      },
+      {
+        "timestamp": 600000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 4010,
+            "level": 6,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 4020,
+            "level": 6,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 4030,
+            "level": 6,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 4040,
+            "level": 6,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 4050,
+            "level": 6,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 3510,
+            "level": 6,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 3520,
+            "level": 6,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 3530,
+            "level": 6,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 3540,
+            "level": 6,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 3550,
+            "level": 6,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": []
+      },
+      {
+        "timestamp": 660000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 4360,
+            "level": 6,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 4370,
+            "level": 6,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 4380,
+            "level": 6,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 4390,
+            "level": 6,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 4400,
+            "level": 6,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 3810,
+            "level": 6,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 3820,
+            "level": 6,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 3830,
+            "level": 6,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 3840,
+            "level": 6,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 3850,
+            "level": 6,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": []
+      },
+      {
+        "timestamp": 720000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 4710,
+            "level": 7,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 4720,
+            "level": 7,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 4730,
+            "level": 7,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 4740,
+            "level": 7,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 4750,
+            "level": 7,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 4110,
+            "level": 7,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 4120,
+            "level": 7,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 4130,
+            "level": 7,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 4140,
+            "level": 7,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 4150,
+            "level": 7,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": [
+          {
+            "type": "BUILDING_KILL",
+            "timestamp": 750000,
+            "buildingType": "TOWER_BUILDING",
+            "towerType": "OUTER_TURRET",
+            "teamId": 200,
+            "laneType": "TOP_LANE",
+            "killerId": 1,
+            "position": {
+              "x": 4300,
+              "y": 13700
+            }
+          }
+        ]
+      },
+      {
+        "timestamp": 780000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 5060,
+            "level": 7,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 5070,
+            "level": 7,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 5080,
+            "level": 7,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 5090,
+            "level": 7,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 5100,
+            "level": 7,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 4410,
+            "level": 7,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 4420,
+            "level": 7,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 4430,
+            "level": 7,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 4440,
+            "level": 7,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 4450,
+            "level": 7,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": []
+      },
+      {
+        "timestamp": 840000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 5410,
+            "level": 8,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 5420,
+            "level": 8,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 5430,
+            "level": 8,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 5440,
+            "level": 8,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 5450,
+            "level": 8,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 4710,
+            "level": 8,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 4720,
+            "level": 8,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 4730,
+            "level": 8,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 4740,
+            "level": 8,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 4750,
+            "level": 8,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": []
+      },
+      {
+        "timestamp": 900000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 5760,
+            "level": 8,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 5770,
+            "level": 8,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 5780,
+            "level": 8,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 5790,
+            "level": 8,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 5800,
+            "level": 8,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 5010,
+            "level": 8,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 5020,
+            "level": 8,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 5030,
+            "level": 8,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 5040,
+            "level": 8,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 5050,
+            "level": 8,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": []
+      },
+      {
+        "timestamp": 960000,
+        "participantFrames": {
+          "1": {
+            "participantId": 1,
+            "totalGold": 6110,
+            "level": 9,
+            "position": {
+              "x": 1100,
+              "y": 2050
+            }
+          },
+          "2": {
+            "participantId": 2,
+            "totalGold": 6120,
+            "level": 9,
+            "position": {
+              "x": 1200,
+              "y": 2100
+            }
+          },
+          "3": {
+            "participantId": 3,
+            "totalGold": 6130,
+            "level": 9,
+            "position": {
+              "x": 1300,
+              "y": 2150
+            }
+          },
+          "4": {
+            "participantId": 4,
+            "totalGold": 6140,
+            "level": 9,
+            "position": {
+              "x": 1400,
+              "y": 2200
+            }
+          },
+          "5": {
+            "participantId": 5,
+            "totalGold": 6150,
+            "level": 9,
+            "position": {
+              "x": 1500,
+              "y": 2250
+            }
+          },
+          "6": {
+            "participantId": 6,
+            "totalGold": 5310,
+            "level": 9,
+            "position": {
+              "x": 1600,
+              "y": 2300
+            }
+          },
+          "7": {
+            "participantId": 7,
+            "totalGold": 5320,
+            "level": 9,
+            "position": {
+              "x": 1700,
+              "y": 2350
+            }
+          },
+          "8": {
+            "participantId": 8,
+            "totalGold": 5330,
+            "level": 9,
+            "position": {
+              "x": 1800,
+              "y": 2400
+            }
+          },
+          "9": {
+            "participantId": 9,
+            "totalGold": 5340,
+            "level": 9,
+            "position": {
+              "x": 1900,
+              "y": 2450
+            }
+          },
+          "10": {
+            "participantId": 10,
+            "totalGold": 5350,
+            "level": 9,
+            "position": {
+              "x": 2000,
+              "y": 2500
+            }
+          }
+        },
+        "events": []
+      }
+    ]
+  }
+}

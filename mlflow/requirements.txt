@@ -1,0 +1,3 @@
+# MLflow tracking server + Postgres backend store driver.
+mlflow>=2.10.0,<3.0.0
+psycopg2-binary>=2.9.9

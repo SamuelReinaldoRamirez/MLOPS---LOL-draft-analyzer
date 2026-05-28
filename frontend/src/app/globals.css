@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #06090f;
+  --foreground: #edf1f8;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    min-height: 100dvh;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Ambient "Runeterra night" backdrop: corner team glows, a faint gold
+     wash, a Hextech dot grid, and a bottom vignette. Lives behind everything
+     and never intercepts pointer events. */
+  .arena-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    pointer-events: none;
+    background-color: #06090f;
+    background-image:
+      radial-gradient(
+        60rem 40rem at 12% -8%,
+        rgba(59, 130, 246, 0.14),
+        transparent 60%
+      ),
+      radial-gradient(
+        58rem 38rem at 92% -6%,
+        rgba(255, 70, 85, 0.12),
+        transparent 60%
+      ),
+      radial-gradient(
+        70rem 50rem at 50% 120%,
+        rgba(200, 170, 110, 0.08),
+        transparent 60%
+      ),
+      radial-gradient(circle at 1px 1px, rgba(200, 170, 110, 0.05) 1px, transparent 0);
+    background-size:
+      100% 100%,
+      100% 100%,
+      100% 100%,
+      26px 26px;
+  }
+
+  ::selection {
+    background: rgba(200, 170, 110, 0.3);
+    color: #f0e6d2;
+  }
+
+  /* Slim, on-theme scrollbars. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #2c3e5e transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #243450;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    border-radius: 9999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: #324663;
+    background-clip: padding-box;
+  }
+
+  /* Keyboard focus: a warm Hextech ring, consistent across controls. */
+  :focus-visible {
+    outline: 2px solid rgba(200, 170, 110, 0.7);
+    outline-offset: 2px;
+    border-radius: 0.375rem;
+  }
+}
+
+@layer components {
+  /* Small uppercase section/eyebrow label. */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-muted;
+  }
+
+  /* The workhorse surface card. */
+  .panel {
+    @apply rounded-2xl border border-line bg-surface/90 shadow-card backdrop-blur-sm;
+  }
+
+  /* Text input / select base. */
+  .field {
+    @apply w-full rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-sm text-ink shadow-inner outline-none transition placeholder:text-ink-dim focus:border-gold/60 focus:ring-2 focus:ring-gold/25;
+  }
+
+  /* Buttons. */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition duration-200 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
+  }
+  .btn-primary {
+    @apply btn bg-gold-sheen text-[#1a1205] shadow-gold hover:brightness-110 active:brightness-95 disabled:bg-none disabled:bg-surface-3 disabled:text-ink-dim disabled:shadow-none;
+  }
+  .btn-secondary {
+    @apply btn border border-line-strong bg-surface-2 text-ink-soft hover:border-gold/50 hover:bg-surface-3 hover:text-ink;
+  }
+  .btn-ghost {
+    @apply btn text-ink-muted hover:bg-surface-2 hover:text-ink;
+  }
+
+  /* Loading shimmer placeholder. */
+  .skeleton {
+    @apply relative overflow-hidden rounded-lg bg-surface-2;
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.06),
+      transparent
+    );
+    animation: shimmer 1.6s infinite;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  /* Gradient text for the wordmark / hero accents. */
+  .text-gold-gradient {
+    @apply bg-gold-sheen bg-clip-text text-transparent;
+  }
+}
+
+/* Respect users who ask for less motion: neutralize transitions/animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton::after {
+    animation: none;
+  }
+}

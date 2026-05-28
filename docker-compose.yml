@@ -1,0 +1,270 @@
+##############################################################################
+# LoL Draft Predictor — Docker Compose (full stack)
+#
+# Services:
+#   postgres   — PostgreSQL 16 (database)
+#   streamlit  — Streamlit frontend (port 8501)
+#   api        — FastAPI inference API (port 8000)
+#   mlflow     — MLflow tracking server (host port 5001, Phase 2)
+#   training   — ML training (run on-demand)
+#
+# Usage:
+#   docker compose up -d postgres          # start DB only
+#   docker compose up -d                   # start all services (incl. mlflow)
+#   docker compose up -d mlflow            # start tracking server (+ postgres)
+#   docker compose run training            # run training job
+#   docker compose run training python scripts/train_all_models.py --model at10
+#
+##############################################################################
+
+services:
+  # ────────────────────────────────────────
+  # PostgreSQL Database
+  # ────────────────────────────────────────
+  postgres:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: lol_draft_db
+    env_file: .env
+    ports:
+      - "${POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/lol_draft.dump:/docker-entrypoint-initdb.d/lol_draft.dump
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lol_admin} -d ${POSTGRES_DB:-lol_draft}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - lol-net
+
+  # ────────────────────────────────────────
+  # Streamlit Frontend
+  # ────────────────────────────────────────
+  streamlit:
+    build:
+      context: ./streamlit
+      dockerfile: Dockerfile
+    container_name: lol_draft_streamlit
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+    env_file: .env
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - MODELS_DIR=/app/models
+    volumes:
+      - models:/app/models
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - lol-net
+
+  # ────────────────────────────────────────
+  # FastAPI Inference API
+  # ────────────────────────────────────────
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: lol_draft_api
+    ports:
+      - "${API_PORT:-8000}:8000"
+    env_file: .env
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - MODELS_DIR=/app/models
+      # Browser origins allowed to call the API (CORS). Includes the Next.js web
+      # UI served by the `frontend` service (host port 8080) and the local dev
+      # server (3000). Comma-separated; read by the FastAPI CORS middleware.
+      - CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS:-http://localhost:8080,http://localhost:3000}
+    volumes:
+      - models:/app/models
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/health').status==200 else sys.exit(1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - lol-net
+
+  # ────────────────────────────────────────
+  # Next.js Web UI (cross-origin)
+  # Production build served by Next.js standalone output on container port 3000,
+  # published on host 8080. The browser fetches the API directly at
+  # NEXT_PUBLIC_API_BASE_URL (host URL, NOT the compose-internal api:8000), so
+  # the API's CORS_ALLOW_ORIGINS must include this UI's origin.
+  # ────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Inlined into the client bundle at build time. Must be the URL the
+        # user's browser uses to reach the API, not the in-stack hostname.
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    container_name: lol_draft_frontend
+    ports:
+      - "${FRONTEND_PORT:-8080}:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - lol-net
+
+  # ────────────────────────────────────────
+  # MLflow Tracking Server (Phase 2)
+  # Backend store: postgres (dedicated `mlflow` DB, created on first boot).
+  # Artifact store: local volume served via --serve-artifacts.
+  # ────────────────────────────────────────
+  mlflow:
+    build:
+      context: ./mlflow
+      dockerfile: Dockerfile
+    container_name: lol_draft_mlflow
+    ports:
+      # Host default 5001: port 5000 clashes with macOS ControlCenter/AirPlay.
+      # Override with MLFLOW_PORT=... if needed. Container port stays 5000.
+      - "${MLFLOW_PORT:-5001}:5000"
+    env_file: .env
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - MLFLOW_DB=${MLFLOW_DB:-mlflow}
+      - MLFLOW_ARTIFACT_ROOT=/mlflow/artifacts
+    volumes:
+      - mlflow_artifacts:/mlflow/artifacts
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:5000/health').status==200 else sys.exit(1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - lol-net
+
+  # ────────────────────────────────────────
+  # ML Training (run on-demand)
+  # ────────────────────────────────────────
+  training:
+    build:
+      context: ./training
+      dockerfile: Dockerfile
+    container_name: lol_draft_training
+    env_file: .env
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - MODELS_DIR=/app/models
+      # Phase 2: log experiments to the MLflow server. If the server is not up,
+      # training degrades to a NO-OP (see train_all_models.py).
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI:-http://mlflow:5000}
+      - MLFLOW_EXPERIMENT=${MLFLOW_EXPERIMENT:-lol-draft-timeline}
+    volumes:
+      - models:/app/models
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+    profiles:
+      - training
+    networks:
+      - lol-net
+
+  # ────────────────────────────────────────
+  # Prometheus — metrics scraping (Phase 4)
+  # Scrapes the api /metrics endpoint (request count/latency + prediction
+  # counter). Config: monitoring/prometheus/prometheus.yml
+  # ────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: lol_draft_prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - lol-net
+
+  # ────────────────────────────────────────
+  # Grafana — dashboards (Phase 4)
+  # Provisioned Prometheus datasource + API/prediction dashboard.
+  # Admin creds via env (.env) — never hardcoded.
+  # ────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: lol_draft_grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-change_me_in_local_env}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - lol-net
+
+# ────────────────────────────────────────
+# Volumes
+# ────────────────────────────────────────
+volumes:
+  pgdata:
+    name: lol_draft_pgdata
+  models:
+    name: lol_draft_models
+  mlflow_artifacts:
+    name: lol_draft_mlflow_artifacts
+  prometheus_data:
+    name: lol_draft_prometheus_data
+  grafana_data:
+    name: lol_draft_grafana_data
+
+# ────────────────────────────────────────
+# Networks
+# ────────────────────────────────────────
+networks:
+  lol-net:
+    name: lol_draft_network

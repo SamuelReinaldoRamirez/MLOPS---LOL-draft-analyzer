@@ -1,0 +1,45 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Prometheus configuration — adapted from monitoring/prometheus/prometheus.yml
+# to use in-cluster Service DNS instead of the compose-network hostname:
+#   compose `api:8000`  →  k8s `lol-draft-api.lol-draft.svc.cluster.local:8000`
+# (the namespace-qualified form ensures correctness even when the workload
+# scraping is cross-namespace; in-namespace `lol-draft-api:8000` also works).
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: lol-draft
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        project: lol-draft-predictor
+        cluster: k8s
+
+    scrape_configs:
+      # FastAPI inference API (in-cluster Service).
+      - job_name: lol-api
+        metrics_path: /metrics
+        static_configs:
+          - targets: ["lol-draft-api.lol-draft.svc.cluster.local:8000"]
+            labels:
+              service: api
+
+      # Prometheus self-monitoring.
+      - job_name: prometheus
+        static_configs:
+          - targets: ["localhost:9090"]
+            labels:
+              service: prometheus
+
+      # MLflow tracking server (/metrics is not exposed by default, but the
+      # scrape is harmless: targets up=0 surfaces the dependency as DOWN).
+      - job_name: mlflow
+        metrics_path: /metrics
+        static_configs:
+          - targets: ["mlflow.lol-draft.svc.cluster.local:5000"]
+            labels:
+              service: mlflow

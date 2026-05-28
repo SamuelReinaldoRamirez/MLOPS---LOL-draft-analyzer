@@ -1,0 +1,75 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Ingress — exposes the stack via an nginx-ingress controller with TLS
+# certificates auto-managed by cert-manager (HTTP-01 challenge → Let's Encrypt).
+#
+# Required cluster components (one-time install per cluster):
+#   - ingress-nginx     (https://kubernetes.github.io/ingress-nginx/)
+#   - cert-manager       (https://cert-manager.io/docs/installation/)
+#   - A ClusterIssuer named `letsencrypt-prod` (point to your email).
+#
+# Hostnames: REPLACE `example.com` with your actual zone in an overlay or via
+# `kustomize edit set` before applying. The same hostnames must be exposed in
+# the public DNS to reach the nginx-ingress controller's external IP / LB.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lol-draft
+  namespace: lol-draft
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    # Force HTTPS — the nginx default for cert-manager-served TLS, but pinned
+    # explicitly so HTTP requests get a 308 instead of being silently allowed.
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.lol-draft.example.com
+        - streamlit.lol-draft.example.com
+        - mlflow.lol-draft.example.com
+        - grafana.lol-draft.example.com
+      secretName: lol-draft-tls
+  rules:
+    - host: api.lol-draft.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: lol-draft-api
+                port:
+                  number: 8000
+    - host: streamlit.lol-draft.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: lol-draft-streamlit
+                port:
+                  number: 8501
+    - host: mlflow.lol-draft.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mlflow
+                port:
+                  number: 5000
+    - host: grafana.lol-draft.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000

@@ -1,0 +1,173 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# NetworkPolicies — default-deny inside the `lol-draft` namespace, then a few
+# targeted allow rules. Cluster must be running a NetworkPolicy-aware CNI
+# (Calico, Cilium, Antrea, …) for these to take effect.
+#
+# Rules expressed (least-privilege):
+#   * api / streamlit / mlflow / grafana / prometheus only receive traffic
+#     from the nginx-ingress namespace (`namespaceSelector` on the standard
+#     label) and from inside `lol-draft` itself (e.g. grafana → prometheus,
+#     prometheus → api).
+#   * Postgres only accepts traffic from the api, streamlit and mlflow
+#     workloads; no external ingress.
+#   * Egress is permissive (allows DNS + Riot API + Let's Encrypt challenges).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# 1. Default deny ALL ingress inside the namespace. Pods only become reachable
+# when a more specific policy matches them.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: lol-draft
+spec:
+  podSelector: {}     # all pods
+  policyTypes: ["Ingress"]
+
+---
+
+# 2. Postgres — only the workloads that actually open a SQL connection.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-postgres
+  namespace: lol-draft
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: lol-draft-api
+        - podSelector:
+            matchLabels:
+              app: lol-draft-streamlit
+        - podSelector:
+            matchLabels:
+              app: mlflow
+      ports:
+        - port: 5432
+          protocol: TCP
+
+---
+
+# 3. API — Ingress controller (nginx) + Prometheus scrape + Streamlit calls.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api
+  namespace: lol-draft
+spec:
+  podSelector:
+    matchLabels:
+      app: lol-draft-api
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        - podSelector:
+            matchLabels:
+              app: prometheus
+        - podSelector:
+            matchLabels:
+              app: lol-draft-streamlit
+      ports:
+        - port: 8000
+          protocol: TCP
+
+---
+
+# 4. Streamlit — Ingress controller only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-streamlit
+  namespace: lol-draft
+spec:
+  podSelector:
+    matchLabels:
+      app: lol-draft-streamlit
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 8501
+          protocol: TCP
+
+---
+
+# 5. MLflow — Ingress controller + intra-namespace clients (training, api).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-mlflow
+  namespace: lol-draft
+spec:
+  podSelector:
+    matchLabels:
+      app: mlflow
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        - podSelector: {}    # any pod in lol-draft
+      ports:
+        - port: 5000
+          protocol: TCP
+
+---
+
+# 6. Prometheus — Grafana + Ingress controller (the dashboards).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus
+  namespace: lol-draft
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: grafana
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 9090
+          protocol: TCP
+
+---
+
+# 7. Grafana — Ingress controller only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-grafana
+  namespace: lol-draft
+spec:
+  podSelector:
+    matchLabels:
+      app: grafana
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: 3000
+          protocol: TCP

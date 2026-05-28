@@ -17,6 +17,34 @@ data/
 *.csv.gz
 *.dump
 
+# Models (trained, too large for git)
+models/
+*.pkl
+
+# API image-staging models: baked into the image via api/Dockerfile, never
+# committed as binaries. The broad `models/` rule above would ignore the whole
+# api/models/ directory (and git won't descend into an ignored dir to honor a
+# nested negation), so re-include the directory, then ignore its contents
+# except the .gitkeep that keeps the build-context folder present (so the
+# Dockerfile COPY never fails, even with no models staged).
+!api/models/
+api/models/*
+!api/models/.gitkeep
+
+# DVC pipeline metrics (Phase 2). Tiny JSON files (~200 bytes each) tracked
+# with `cache: false` so they live in git, not the DVC cache. Re-include them
+# explicitly under the otherwise-ignored `models/` directory so `dvc metrics
+# show` and `dvc metrics diff` work against history.
+!models/
+models/*
+!models/.gitkeep
+!models/metrics_*.json
+
+# DVC local remote (`dvc remote add -d local-storage .dvc-storage`). Never
+# committed: contents are content-addressed copies of DVC-tracked artefacts
+# and would explode the repo. Push/pull via `dvc push|pull` instead.
+.dvc-storage/
+
 # Docker volumes
 pgdata/
 
@@ -28,3 +56,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Local tool caches & dev-time screenshots (not referenced by any doc)
+.playwright-mcp/
+prg-*.png

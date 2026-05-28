@@ -1,0 +1,29 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LoL Draft Predictor — Prometheus config (Phase 4)
+#
+# Scrapes the FastAPI /metrics endpoint (HTTP request count/latency from
+# prometheus-fastapi-instrumentator + the custom lol_predictions_total counter)
+# and Prometheus' own /metrics. Targets use the docker-compose service DNS
+# names on the shared `lol-net` network.
+# ─────────────────────────────────────────────────────────────────────────────
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: lol-draft-predictor
+
+scrape_configs:
+  # FastAPI inference API.
+  - job_name: lol-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8000"]
+        labels:
+          service: api
+
+  # Prometheus self-monitoring.
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          service: prometheus

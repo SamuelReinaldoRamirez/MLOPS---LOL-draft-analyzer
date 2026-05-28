@@ -1,0 +1,119 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Streamlit frontend — Deployment + Service + HPA.
+# Reads `lol-draft-config` for hostnames/ports and `lol-draft-secrets` for
+# whatever it needs (currently nothing sensitive, but the envFrom keeps the
+# pattern uniform with the api Deployment). Mounts the shared models PVC
+# read-only so the UI displays the model that's actually being served.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lol-draft-streamlit
+  namespace: lol-draft
+  labels:
+    app: lol-draft-streamlit
+    component: streamlit
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: lol-draft-streamlit
+  template:
+    metadata:
+      labels:
+        app: lol-draft-streamlit
+        component: streamlit
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: streamlit
+          image: lol-draft-streamlit:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8501
+          envFrom:
+            - configMapRef:
+                name: lol-draft-config
+            - secretRef:
+                name: lol-draft-secrets
+          readinessProbe:
+            httpGet:
+              # Streamlit's standard healthz endpoint.
+              path: /_stcore/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "150m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "768Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: models
+              mountPath: /app/models
+              readOnly: true
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: lol-draft-models
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lol-draft-streamlit
+  namespace: lol-draft
+  labels:
+    app: lol-draft-streamlit
+    component: streamlit
+spec:
+  type: ClusterIP
+  selector:
+    app: lol-draft-streamlit
+  ports:
+    - name: http
+      port: 8501
+      targetPort: http
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: lol-draft-streamlit
+  namespace: lol-draft
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: lol-draft-streamlit
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75

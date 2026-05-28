@@ -1,0 +1,2 @@
+# Next.js static assets directory. Kept so the Docker build's
+# `COPY .../public ./public` step always has a directory to copy.

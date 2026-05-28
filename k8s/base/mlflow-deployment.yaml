@@ -1,0 +1,88 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# MLflow tracking server — Deployment.
+# Mirrors the compose `mlflow` service: backend store = Postgres (db `mlflow`,
+# created idempotently by `mlflow/entrypoint.sh`); artifacts on PVC at
+# /mlflow/artifacts; UI served on port 5000 and reachable in-cluster via the
+# `mlflow` Service (Streamlit + training read MLFLOW_TRACKING_URI from the
+# ConfigMap to talk to it).
+#
+# Single replica: MLflow's file-system artifact backend assumes one writer.
+# For HA, switch to S3 / GCS artifact store and replicate the Deployment.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow
+  namespace: lol-draft
+  labels:
+    app: mlflow
+    component: mlflow
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate     # PVC is RWO; rolling would deadlock
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+        component: mlflow
+    spec:
+      containers:
+        - name: mlflow
+          # Built from `mlflow/Dockerfile` — push to a registry and update.
+          image: lol-draft-mlflow:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: lol-draft-config
+            - secretRef:
+                name: lol-draft-secrets
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "768Mi"
+          volumeMounts:
+            - name: artifacts
+              mountPath: /mlflow/artifacts
+      volumes:
+        - name: artifacts
+          persistentVolumeClaim:
+            claimName: mlflow-artifacts
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow
+  namespace: lol-draft
+  labels:
+    app: mlflow
+    component: mlflow
+spec:
+  type: ClusterIP
+  selector:
+    app: mlflow
+  ports:
+    - name: http
+      port: 5000
+      targetPort: http
