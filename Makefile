@@ -36,7 +36,7 @@ env:
 
 ## up: Start the full stack (postgres + api + streamlit + mlflow)
 up: env
-	$(COMPOSE) up -d
+	$(COMPOSE) up -d --build
 
 ## up-db: Start PostgreSQL only
 up-db: env
