@@ -128,22 +128,31 @@ class RiotUpstreamError(RiotError):
 
 
 # ──────────────────────────────────────────
-# API-key rotation (round-robin + failover)
+# API-key rotation (sticky key + failover)
 # ──────────────────────────────────────────
 #
 # Riot *development* keys expire every 24h (and can be revoked sooner). To keep
 # the live features working we accept SEVERAL keys via ``RIOT_API_KEYS`` (a
 # comma-separated list; ``RIOT_API_KEY`` stays supported as a single-key
-# fallback) and use them round-robin: each successful request advances a shared
-# pointer so load spreads across keys. When a key answers 401/403 (expired /
+# fallback) and fail over between them: when a key answers 401/403 (expired /
 # revoked) it is marked "dead" and the request transparently retries with the
 # next key. Dead keys are tried again only as a last resort, so a regenerated
 # key recovers without a restart.
 #
+# IMPORTANT — why we do NOT round-robin per request:
+#   Riot encrypts each PUUID *for the requesting API key*. A PUUID obtained with
+#   key A only decrypts with key A; summoner-v4 / match-v5 / spectator-v5 called
+#   with a different key return 400 "Exception decrypting <puuid>". Since a
+#   single user flow chains account-v1 -> summoner-v4 -> match-v5 (and the
+#   frontend re-sends the PUUID across separate API requests), ALL of those
+#   calls must use the SAME key. So we keep one "current" key sticky for every
+#   request and only advance the pointer when a key actually dies. (Per-request
+#   load-spreading is impossible here without breaking PUUID decryption.)
+#
 # ``RiotClient`` is instantiated per-request (see ``get_riot_client``), so the
-# rotation pointer and the dead-key set must live at MODULE scope to persist
-# across requests. All mutations happen inside the single asyncio event loop
-# with no ``await`` between the read and the write, so no lock is needed.
+# pointer and the dead-key set must live at MODULE scope to persist across
+# requests. All mutations happen inside the single asyncio event loop with no
+# ``await`` between the read and the write, so no lock is needed.
 _KEY_ROTATION_INDEX = 0
 _DEAD_KEYS: set = set()
 
@@ -269,9 +278,10 @@ class RiotClient:
         retried up to ``self._retries`` times with capped exponential backoff;
         404 and other 4xx are raised immediately (a retry won't change them).
 
-        Across the configured keys this also does round-robin + failover: a
-        401/403 (expired/revoked key) retires that key and re-issues the request
-        with the next one; a successful call advances the shared rotation pointer.
+        Across the configured keys this also does sticky-key failover: a 401/403
+        (expired/revoked key) retires that key and re-issues the request with the
+        next one, which then becomes the sticky current key. A successful call
+        does NOT switch keys (required so per-key-encrypted PUUIDs keep working).
         """
         global _KEY_ROTATION_INDEX
         keys = self._resolve_keys()
@@ -329,11 +339,13 @@ class RiotClient:
                     # fix — fail fast, same as before.
                     raise RiotUpstreamError(f"Riot API returned {status}.", status=502)
 
-                # Success: this key works — revive it if it was flagged, and
-                # advance the round-robin pointer so the NEXT request starts on
-                # the following key (spreads load / rate limits across keys).
+                # Success: this key works — revive it if it was flagged and make
+                # it the sticky current key, so EVERY subsequent request (and
+                # every chained call within this one) reuses it. This is required
+                # for PUUID decryption: a PUUID is encrypted per key, so the
+                # account-v1 -> summoner-v4 -> match-v5 chain must not switch keys.
                 _DEAD_KEYS.discard(key)
-                _KEY_ROTATION_INDEX = (keys.index(key) + 1) % len(keys)
+                _KEY_ROTATION_INDEX = keys.index(key)
                 try:
                     return resp.json()
                 except ValueError as exc:  # pragma: no cover - malformed body

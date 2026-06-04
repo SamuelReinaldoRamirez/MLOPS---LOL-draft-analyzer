@@ -72,8 +72,13 @@ def test_dead_key_is_skipped_on_next_request():
     assert used == ["GOOD"]
 
 
-def test_round_robin_spreads_requests_across_keys():
-    """Consecutive successful requests advance the shared rotation pointer."""
+def test_working_key_is_sticky_across_requests():
+    """Consecutive requests reuse the SAME key.
+
+    Required by Riot: a PUUID is encrypted per key, so the account-v1 ->
+    summoner-v4 -> match-v5 chain (spread across separate API requests that
+    re-send the PUUID) must never switch keys. Only an expiry (401/403) does.
+    """
     used = []
 
     def handler(request):
@@ -84,7 +89,28 @@ def test_round_robin_spreads_requests_across_keys():
     for _ in range(4):
         _run(RiotClient(api_key="A,B,C", transport=transport).get_summoner_by_puuid("p", platform="euw1"))
 
-    assert used == ["A", "B", "C", "A"]  # round-robin wraps after the 3rd key
+    assert used == ["A", "A", "A", "A"]  # sticky: never rotates on success
+
+
+def test_new_key_becomes_sticky_after_failover():
+    """After the first key dies, the failover key becomes the new sticky key."""
+    used = []
+
+    def handler(request):
+        key = request.headers["X-Riot-Token"]
+        used.append(key)
+        if key == "DEAD":
+            return httpx.Response(403, json={"status": {"status_code": 403}})
+        return httpx.Response(200, json=SUMMONER)
+
+    transport = make_riot_transport(handler)
+    # 1st request: DEAD fails over to B.
+    _run(RiotClient(api_key="DEAD,B,C", transport=transport).get_summoner_by_puuid("p", platform="euw1"))
+    used.clear()
+    # 2nd request: starts straight on B (DEAD skipped, B sticky), no C.
+    _run(RiotClient(api_key="DEAD,B,C", transport=transport).get_summoner_by_puuid("p", platform="euw1"))
+
+    assert used == ["B"]
 
 
 def test_all_keys_expired_raises_upstream():
