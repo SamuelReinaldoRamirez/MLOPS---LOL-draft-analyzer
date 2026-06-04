@@ -1,0 +1,37 @@
+# Fly.io config — LoL Draft Predictor API (FastAPI).
+#
+# API-only deployment: predictions use the baked-in model_*.pkl files and the
+# static champion_id_map.json, so NO database is required. The DB-backed routes
+# (/stats/overview, /riot/suggest) degrade gracefully; live Riot routes work via
+# RIOT_API_KEY (set as a Fly secret, not here).
+#
+# Deploy:  cd api && fly deploy
+app = "lol-draft-api-aijo24"
+primary_region = "cdg"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  MODELS_DIR = "/app/models"
+  # Browser origins allowed to call the API (CORS). Includes the Vercel front.
+  CORS_ALLOW_ORIGINS = "https://frontend-beta-teal-45.vercel.app,https://frontend-6rtuoyijw-aijo24s-projects.vercel.app"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  # Scale to zero when idle to keep the demo cheap; first request cold-starts.
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
