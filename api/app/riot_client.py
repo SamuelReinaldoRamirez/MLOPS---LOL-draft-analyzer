@@ -128,6 +128,66 @@ class RiotUpstreamError(RiotError):
 
 
 # ──────────────────────────────────────────
+# API-key rotation (round-robin + failover)
+# ──────────────────────────────────────────
+#
+# Riot *development* keys expire every 24h (and can be revoked sooner). To keep
+# the live features working we accept SEVERAL keys via ``RIOT_API_KEYS`` (a
+# comma-separated list; ``RIOT_API_KEY`` stays supported as a single-key
+# fallback) and use them round-robin: each successful request advances a shared
+# pointer so load spreads across keys. When a key answers 401/403 (expired /
+# revoked) it is marked "dead" and the request transparently retries with the
+# next key. Dead keys are tried again only as a last resort, so a regenerated
+# key recovers without a restart.
+#
+# ``RiotClient`` is instantiated per-request (see ``get_riot_client``), so the
+# rotation pointer and the dead-key set must live at MODULE scope to persist
+# across requests. All mutations happen inside the single asyncio event loop
+# with no ``await`` between the read and the write, so no lock is needed.
+_KEY_ROTATION_INDEX = 0
+_DEAD_KEYS: set = set()
+
+
+def _split_keys(raw: str) -> List[str]:
+    """Parse a comma-separated key string into a clean, de-duplicated list."""
+    seen: set = set()
+    keys: List[str] = []
+    for part in (raw or "").split(","):
+        k = part.strip()
+        if k and k not in seen:
+            seen.add(k)
+            keys.append(k)
+    return keys
+
+
+def _configured_keys(explicit: Optional[str]) -> List[str]:
+    """Ordered list of configured keys.
+
+    ``explicit`` (the ``RiotClient(api_key=...)`` override, used by tests) wins;
+    otherwise read ``RIOT_API_KEYS`` (preferred, comma-separated) then fall back
+    to the single ``RIOT_API_KEY``.
+    """
+    if explicit is not None:
+        return _split_keys(explicit)
+    raw = os.getenv("RIOT_API_KEYS") or os.getenv("RIOT_API_KEY", "")
+    return _split_keys(raw)
+
+
+def _keys_in_rotation_order(keys: List[str]) -> List[str]:
+    """Keys to try for one request: start at the round-robin pointer, live first.
+
+    Dead keys are appended last so an expired-then-regenerated key still gets a
+    chance (and recovers) without skipping the healthy keys.
+    """
+    n = len(keys)
+    start = _KEY_ROTATION_INDEX % n
+    rotated = [keys[(start + i) % n] for i in range(n)]
+    live = [k for k in rotated if k not in _DEAD_KEYS]
+    dead = [k for k in rotated if k in _DEAD_KEYS]
+    return live + dead
+
+
+# ──────────────────────────────────────────
 # Client
 # ──────────────────────────────────────────
 
@@ -174,12 +234,12 @@ class RiotClient:
 
     # -- internals ---------------------------------------------------------
 
-    def _resolve_key(self) -> str:
-        key = self._api_key if self._api_key is not None else os.getenv("RIOT_API_KEY", "")
-        key = (key or "").strip()
-        if not key:
+    def _resolve_keys(self) -> List[str]:
+        """Configured keys for this client, or raise if none are set."""
+        keys = _configured_keys(self._api_key)
+        if not keys:
             raise RiotKeyMissingError("Riot API key not configured.")
-        return key
+        return keys
 
     def _backoff_seconds(self, attempt: int) -> float:
         """Exponential backoff for retry ``attempt`` (0-based), capped."""
@@ -208,53 +268,84 @@ class RiotClient:
         Transient failures (network/timeout, 5xx, or a short-window 429) are
         retried up to ``self._retries`` times with capped exponential backoff;
         404 and other 4xx are raised immediately (a retry won't change them).
-        """
-        key = self._resolve_key()
-        headers = {"X-Riot-Token": key}
-        attempt = 0
-        while True:
-            try:
-                async with httpx.AsyncClient(
-                    transport=self._transport, timeout=self._timeout
-                ) as client:
-                    resp = await client.get(url, headers=headers, params=params)
-            except httpx.HTTPError as exc:  # network / transport / timeout
-                if attempt < self._retries:
-                    await asyncio.sleep(self._backoff_seconds(attempt))
-                    attempt += 1
-                    continue
-                raise RiotUpstreamError(f"Riot request failed: {exc}") from exc
 
-            status = resp.status_code
-            if status == 404:
-                raise RiotNotFoundError("Riot resource not found.", status=404)
-            if status == 429:
-                # Retry the short per-second burst limit; honour Retry-After but
-                # don't sleep past the cap (the per-2-min window) — surface it.
-                if attempt < self._retries:
-                    wait = self._retry_after_seconds(resp)
-                    if wait is None:
-                        wait = self._backoff_seconds(attempt)
-                    if wait <= self._retry_max_sleep:
-                        await asyncio.sleep(wait)
+        Across the configured keys this also does round-robin + failover: a
+        401/403 (expired/revoked key) retires that key and re-issues the request
+        with the next one; a successful call advances the shared rotation pointer.
+        """
+        global _KEY_ROTATION_INDEX
+        keys = self._resolve_keys()
+        last_key_error: Optional[RiotError] = None
+
+        for key in _keys_in_rotation_order(keys):
+            headers = {"X-Riot-Token": key}
+            attempt = 0
+            tried_next_key = False
+            while True:
+                try:
+                    async with httpx.AsyncClient(
+                        transport=self._transport, timeout=self._timeout
+                    ) as client:
+                        resp = await client.get(url, headers=headers, params=params)
+                except httpx.HTTPError as exc:  # network / transport / timeout
+                    if attempt < self._retries:
+                        await asyncio.sleep(self._backoff_seconds(attempt))
                         attempt += 1
                         continue
-                raise RiotRateLimitError("Riot API rate limit exceeded.", status=429)
-            if status >= 500:
-                if attempt < self._retries:
-                    await asyncio.sleep(self._backoff_seconds(attempt))
-                    attempt += 1
-                    continue
-                raise RiotUpstreamError(f"Riot API returned {status}.", status=502)
-            if status >= 400:
-                # Other 4xx (400/401/403/415, ...) are client errors a retry
-                # won't fix — fail fast, same as before.
-                raise RiotUpstreamError(f"Riot API returned {status}.", status=502)
+                    raise RiotUpstreamError(f"Riot request failed: {exc}") from exc
 
-            try:
-                return resp.json()
-            except ValueError as exc:  # pragma: no cover - malformed upstream body
-                raise RiotUpstreamError("Riot API returned a non-JSON body.") from exc
+                status = resp.status_code
+                if status in (401, 403):
+                    # Expired / revoked key — retire it and fall through to the
+                    # next configured key (round-robin failover).
+                    _DEAD_KEYS.add(key)
+                    last_key_error = RiotUpstreamError(
+                        f"Riot API key rejected ({status}).", status=502
+                    )
+                    tried_next_key = True
+                    break
+                if status == 404:
+                    raise RiotNotFoundError("Riot resource not found.", status=404)
+                if status == 429:
+                    # Retry the short per-second burst limit; honour Retry-After
+                    # but don't sleep past the cap (per-2-min window) — surface it.
+                    if attempt < self._retries:
+                        wait = self._retry_after_seconds(resp)
+                        if wait is None:
+                            wait = self._backoff_seconds(attempt)
+                        if wait <= self._retry_max_sleep:
+                            await asyncio.sleep(wait)
+                            attempt += 1
+                            continue
+                    raise RiotRateLimitError("Riot API rate limit exceeded.", status=429)
+                if status >= 500:
+                    if attempt < self._retries:
+                        await asyncio.sleep(self._backoff_seconds(attempt))
+                        attempt += 1
+                        continue
+                    raise RiotUpstreamError(f"Riot API returned {status}.", status=502)
+                if status >= 400:
+                    # Other 4xx (400/415, ...) are client errors a retry won't
+                    # fix — fail fast, same as before.
+                    raise RiotUpstreamError(f"Riot API returned {status}.", status=502)
+
+                # Success: this key works — revive it if it was flagged, and
+                # advance the round-robin pointer so the NEXT request starts on
+                # the following key (spreads load / rate limits across keys).
+                _DEAD_KEYS.discard(key)
+                _KEY_ROTATION_INDEX = (keys.index(key) + 1) % len(keys)
+                try:
+                    return resp.json()
+                except ValueError as exc:  # pragma: no cover - malformed body
+                    raise RiotUpstreamError("Riot API returned a non-JSON body.") from exc
+
+            if tried_next_key:
+                continue
+
+        # Every configured key was rejected with 401/403.
+        raise last_key_error or RiotKeyMissingError(
+            "All Riot API keys are expired or invalid."
+        )
 
     async def _get_json(self, url: str) -> Dict[str, Any]:
         """GET ``url`` expecting a JSON object (account-v1 / summoner-v4)."""
