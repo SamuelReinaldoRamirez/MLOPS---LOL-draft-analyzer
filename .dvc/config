@@ -1,4 +1,9 @@
 [core]
-    remote = local-storage
+    remote = dagshub
 ['remote "local-storage"']
     url = ../.dvc-storage
+['remote "dagshub"']
+    url = https://dagshub.com/samuel.reinaldo.ramirez/MLOPS---LOL-draft-analyzer.dvc
+    auth = basic
+    user = samuel.reinaldo.ramirez
+    password = af60ac0eaf36e66dc4ce886aa729712b0075179c
