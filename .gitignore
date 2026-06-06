@@ -17,6 +17,12 @@ data/
 *.csv.gz
 *.dump
 
+# ...but frontend/src/data/ is SOURCE CODE (the champion list the draft UI
+# imports), not bulk data — the broad `data/` rule above would wrongly ignore it
+# and break a fresh clone's `npm run build`. Re-include the dir and its contents.
+!frontend/src/data/
+!frontend/src/data/**
+
 # Models (trained, too large for git)
 models/
 *.pkl
