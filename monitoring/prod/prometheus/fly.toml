@@ -1,0 +1,17 @@
+# Fly.io — Prometheus (PRODUCTION monitoring for the LoL Draft Predictor API).
+#
+# Scrapes the public Fly API /metrics. No public HTTP service: it is reached only
+# by the Grafana app over Fly's private network (lol-draft-prometheus.internal),
+# and it stays always-on (no auto-stop) so scraping is continuous.
+#
+# Deploy:  cd monitoring/prod/prometheus && fly deploy
+# NOTE: TSDB is ephemeral (no volume) — metrics history resets on redeploy.
+app = "lol-draft-prometheus"
+primary_region = "cdg"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

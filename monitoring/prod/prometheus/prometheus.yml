@@ -1,0 +1,30 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LoL Draft Predictor — Prometheus config (PRODUCTION on Fly.io)
+#
+# Unlike the local compose config (which scrapes api:8000 over the lol-net
+# network), this scrapes the PUBLIC Fly API endpoint over HTTPS. Grafana reaches
+# this Prometheus over Fly's private 6PN network (lol-draft-prometheus.internal).
+# ─────────────────────────────────────────────────────────────────────────────
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: lol-draft-predictor
+    env: prod
+
+scrape_configs:
+  # FastAPI inference API, deployed on Fly (public HTTPS endpoint).
+  - job_name: lol-api
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["lol-draft-api-aijo24.fly.dev"]
+        labels:
+          service: api
+
+  # Prometheus self-monitoring.
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          service: prometheus

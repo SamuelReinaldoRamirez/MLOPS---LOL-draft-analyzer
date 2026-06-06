@@ -1,0 +1,29 @@
+# Fly.io — Grafana (PRODUCTION dashboards for the LoL Draft Predictor API).
+#
+# Public UI on :3000. Datasource + dashboard are provisioned (baked in the
+# image), so the app is stateless and can scale to zero between visits. Reads
+# Prometheus over Fly's private network (lol-draft-prometheus.internal).
+#
+# Set the admin password once:  fly secrets set GF_SECURITY_ADMIN_PASSWORD=... -a lol-draft-grafana
+# Deploy:  cd monitoring/prod/grafana && fly deploy
+app = "lol-draft-grafana"
+primary_region = "cdg"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  GF_SERVER_ROOT_URL = "https://lol-draft-grafana.fly.dev"
+  # Provisioned dashboards/datasource are read-only-ish; allow anonymous viewing
+  # is OFF by default (login required). Admin creds via secret above.
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

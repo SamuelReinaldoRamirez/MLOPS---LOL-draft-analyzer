@@ -1,0 +1,15 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Grafana provisioned datasource (PRODUCTION on Fly.io)
+# Points at the Prometheus app over Fly's private 6PN network.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://lol-draft-prometheus.internal:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: 15s
