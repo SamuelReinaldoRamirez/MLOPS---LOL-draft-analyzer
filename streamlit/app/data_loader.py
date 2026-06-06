@@ -28,7 +28,9 @@ def get_winrate_by_side() -> dict:
     row = fetchone("""
         SELECT
             COUNT(*) as total,
-            SUM(CASE WHEN team_100_win = true THEN 1 ELSE 0 END) as blue_wins
+            -- team_100_win is stored as smallint (0/1) in the dump; cast so the
+            -- comparison works whether the column is smallint or boolean.
+            SUM(CASE WHEN team_100_win::int = 1 THEN 1 ELSE 0 END) as blue_wins
         FROM matches
     """)
     total = row[0] if row and row[0] else 1
