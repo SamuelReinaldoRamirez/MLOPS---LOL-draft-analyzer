@@ -9,12 +9,12 @@
 # the md5 before putting the file in place (a partial/corrupt download is never
 # left at the final path).
 #
-# No gdown/Python needed: the drive.usercontent.google.com endpoint with
-# `confirm=t` bypasses Google's large-file virus-scan interstitial, so a plain
-# curl (or wget) streams the bytes directly.
+# Source: the project's DagsHub repo, which hosts the DVC-tracked dump and
+# serves it transparently (anonymously, no token) at its `raw/<branch>/<path>`
+# URL. No gdown/Python needed — a plain curl (or wget) streams the bytes.
 #
 # Override the source with DUMP_URL=... ./scripts/fetch_dump.sh if you mirror the
-# dump elsewhere (e.g. S3 / GitHub Release).
+# dump elsewhere (S3 / GitHub Release / Google Drive / your own DagsHub fork).
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -23,8 +23,7 @@ PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 DUMP_PATH="${PROJECT_DIR}/database/lol_draft.dump"
 EXPECTED_MD5="367c127c874f502ba0a129bfcc1d95fd"   # matches database/lol_draft.dump.dvc
-FILE_ID="1zhWlsXZsbZthnlGvNnUvghNHWjXqaKeu"
-DUMP_URL="${DUMP_URL:-https://drive.usercontent.google.com/download?id=${FILE_ID}&export=download&confirm=t}"
+DUMP_URL="${DUMP_URL:-https://dagshub.com/samuel.reinaldo.ramirez/MLOPS---LOL-draft-analyzer/raw/main/database/lol_draft.dump}"
 
 # md5 helper that works on both macOS (`md5 -q`) and Linux (`md5sum`).
 md5_of() {

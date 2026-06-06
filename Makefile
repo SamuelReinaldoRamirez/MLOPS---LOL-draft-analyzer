@@ -3,7 +3,7 @@
 #
 # Thin wrappers over the EXISTING docker compose / script commands. No live Riot
 # collection: the pipeline uses database/lol_draft.dump (~783 MB, git-ignored).
-# `make demo`/`make restore` AUTO-DOWNLOAD it from Google Drive (md5-verified)
+# `make demo`/`make restore` AUTO-DOWNLOAD it from DagsHub (md5-verified)
 # via scripts/fetch_dump.sh, so a fresh clone needs nothing placed by hand.
 #
 # Quick start (full local pipeline):  make demo
@@ -28,7 +28,7 @@ help:
 	@echo ""
 	@grep -E '^## ' $(MAKEFILE_LIST) | sed -e 's/## //' | awk -F': ' '{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 	@echo ""
-	@echo "Full local pipeline: make demo  (auto-downloads the DB dump from Google Drive)"
+	@echo "Full local pipeline: make demo  (auto-downloads the DB dump from DagsHub)"
 
 ## env: Create .env from .env.example if missing (placeholders only)
 env:
@@ -43,7 +43,7 @@ up: env
 up-db: env
 	$(COMPOSE) up -d postgres
 
-## fetch-dump: Download the DB dump (~783 MB) from Google Drive if missing (md5-verified)
+## fetch-dump: Download the DB dump (~783 MB) from DagsHub if missing (md5-verified)
 fetch-dump:
 	@./scripts/fetch_dump.sh
 
@@ -55,7 +55,7 @@ restore: up-db fetch-dump
 	@echo "Postgres healthy. The dump is auto-restored on first boot via database/restore.sh"
 	@echo "(To force a fresh restore: 'make clean' then 'make restore'.)"
 
-## seed: Seed model_*.pkl into the running api container (needs source project as sibling)
+## seed: Seed model_*.pkl into the running api container (from api/models/ by default)
 seed:
 	./scripts/seed_models.sh
 

@@ -36,7 +36,7 @@ docker compose up -d          # postgres + streamlit + api + mlflow (+ prometheu
 ```
 
 > Le dump PostgreSQL `database/lol_draft.dump` (~783 Mo) est **git-ignoré** mais
-> **téléchargé automatiquement** depuis Google Drive (md5 vérifié) par
+> **téléchargé automatiquement** depuis DagsHub (md5 vérifié) par
 > `scripts/fetch_dump.sh` lors d'un `make demo` / `make restore` — un clone neuf
 > n'a donc **rien à placer à la main**. Les modèles `model_*.pkl` sont, eux,
 > commités dans `api/models/`. Les **tests** et la **CI** n'ont besoin ni du dump
@@ -113,7 +113,7 @@ docker compose up -d            # postgres + streamlit + api
 ```
 
 Le dump PostgreSQL volumineux (`database/lol_draft.dump`, ~783 Mo) est
-**git-ignoré** mais **téléchargé automatiquement** depuis Google Drive par
+**git-ignoré** mais **téléchargé automatiquement** depuis DagsHub par
 `make demo`/`make restore` (ou `make fetch-dump` / `./scripts/fetch_dump.sh`
 directement). La **collecte de données live** nécessite un
 `RIOT_API_KEY` dans un `.env` local (laissé vide dans `.env.example`) et
@@ -377,7 +377,7 @@ cp .env.example .env
 ### 2. Lancer la base de données
 
 ```bash
-# Télécharge lol_draft.dump depuis Google Drive s'il manque (md5 vérifié)
+# Télécharge lol_draft.dump depuis DagsHub s'il manque (md5 vérifié)
 ./scripts/fetch_dump.sh
 docker compose up -d postgres
 ```
@@ -492,7 +492,7 @@ MLOPS---LOL-draft-analyzer/
 ├── database/                   # Service PostgreSQL
 │   ├── init.sql                # Schéma: 15 tables + index
 │   ├── restore.sh              # Auto-restore du dump
-│   ├── lol_draft.dump          # Dump (~783 MB, git-ignoré, auto-téléchargé depuis Google Drive)
+│   ├── lol_draft.dump          # Dump (~783 MB, git-ignoré, auto-téléchargé depuis DagsHub)
 │   └── .env.example
 │
 ├── streamlit/                  # Service Streamlit
@@ -525,7 +525,7 @@ MLOPS---LOL-draft-analyzer/
 │   └── tests/                  # Tests feature engineering + MLflow + drift + auto-retrain
 │
 └── scripts/
-    ├── fetch_dump.sh           # Télécharge le dump DB depuis Google Drive (md5 vérifié)
+    ├── fetch_dump.sh           # Télécharge le dump DB depuis DagsHub (md5 vérifié)
     ├── seed_models.sh          # Seed modèles dans l'API (depuis api/models/ par défaut)
     └── auto_retrain.py         # Hook ré-entraînement gated par le drift (Phase 4)
 ```
