@@ -1,16 +1,26 @@
 # Fly.io — Prometheus (PRODUCTION monitoring for the LoL Draft Predictor API).
 #
-# Scrapes the public Fly API /metrics. No public HTTP service: it is reached only
-# by the Grafana app over Fly's private network (lol-draft-prometheus.internal),
-# and it stays always-on (no auto-stop) so scraping is continuous.
+# Scrapes the public Fly API /metrics. Exposes an HTTP service on 9090 with
+# auto_stop DISABLED + min_machines_running=1 so the machine stays ALWAYS-ON
+# (a service-less Fly app gets auto-stopped, which breaks scraping + the Grafana
+# datasource). Grafana reads it at https://lol-draft-prometheus.fly.dev.
 #
 # Deploy:  cd monitoring/prod/prometheus && fly deploy
 # NOTE: TSDB is ephemeral (no volume) — metrics history resets on redeploy.
+# NOTE: the endpoint is public + unauthenticated (read-only, low-sensitivity API
+#       request metrics). Add basic_auth via --web.config.file to lock it down.
 app = "lol-draft-prometheus"
 primary_region = "cdg"
 
 [build]
   dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 9090
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
 
 [[vm]]
   size = "shared-cpu-1x"

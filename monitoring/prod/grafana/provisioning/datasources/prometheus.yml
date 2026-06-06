@@ -1,6 +1,8 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Grafana provisioned datasource (PRODUCTION on Fly.io)
-# Points at the Prometheus app over Fly's private 6PN network.
+# Reaches Prometheus over Fly's private 6PN network. Reliable now that the
+# Prometheus app is always-on (min_machines_running=1) — .internal resolves to a
+# running instance, with no dependency on public DNS/cert propagation.
 # ─────────────────────────────────────────────────────────────────────────────
 apiVersion: 1
 
