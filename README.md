@@ -35,9 +35,12 @@ make demo                     # pipeline complet : db -> restore -> up -> seed -
 docker compose up -d          # postgres + streamlit + api + mlflow (+ prometheus + grafana)
 ```
 
-> Le dump PostgreSQL `database/lol_draft.dump` (~747 Mo) est **git-ignoré et
-> fourni séparément** : placez-le dans `database/` avant `make demo` / `make
-> restore`. Les **tests** et la **CI** n'en ont **pas** besoin.
+> Le dump PostgreSQL `database/lol_draft.dump` (~783 Mo) est **git-ignoré** mais
+> **téléchargé automatiquement** depuis Google Drive (md5 vérifié) par
+> `scripts/fetch_dump.sh` lors d'un `make demo` / `make restore` — un clone neuf
+> n'a donc **rien à placer à la main**. Les modèles `model_*.pkl` sont, eux,
+> commités dans `api/models/`. Les **tests** et la **CI** n'ont besoin ni du dump
+> ni des modèles.
 
 **URLs de démo** (une fois la stack démarrée) :
 
@@ -109,9 +112,10 @@ cp database/.env.example database/.env   # si utilisé
 docker compose up -d            # postgres + streamlit + api
 ```
 
-Le dump PostgreSQL volumineux (`database/lol_draft.dump`, ~747 Mo) est
-**fourni séparément et git-ignoré** : placez-le dans `database/` avant de
-démarrer `postgres`. La **collecte de données live** nécessite un
+Le dump PostgreSQL volumineux (`database/lol_draft.dump`, ~783 Mo) est
+**git-ignoré** mais **téléchargé automatiquement** depuis Google Drive par
+`make demo`/`make restore` (ou `make fetch-dump` / `./scripts/fetch_dump.sh`
+directement). La **collecte de données live** nécessite un
 `RIOT_API_KEY` dans un `.env` local (laissé vide dans `.env.example`) et
 **sort du périmètre Phase 1**.
 
@@ -373,7 +377,8 @@ cp .env.example .env
 ### 2. Lancer la base de données
 
 ```bash
-# S'assurer que lol_draft.dump est dans database/
+# Télécharge lol_draft.dump depuis Google Drive s'il manque (md5 vérifié)
+./scripts/fetch_dump.sh
 docker compose up -d postgres
 ```
 
@@ -386,7 +391,8 @@ docker compose up -d
 ### 4. Seed des modèles (première fois)
 
 ```bash
-# Copier les modèles existants depuis le projet source
+# Copie les modèles dans le conteneur API. Par défaut depuis api/models/
+# (commités dans le repo) ; sinon depuis un projet source voisin si présent.
 ./scripts/seed_models.sh
 ```
 
@@ -486,7 +492,7 @@ MLOPS---LOL-draft-analyzer/
 ├── database/                   # Service PostgreSQL
 │   ├── init.sql                # Schéma: 15 tables + index
 │   ├── restore.sh              # Auto-restore du dump
-│   ├── lol_draft.dump          # Dump compressé (~747 MB, FOURNI À PART, git-ignoré)
+│   ├── lol_draft.dump          # Dump (~783 MB, git-ignoré, auto-téléchargé depuis Google Drive)
 │   └── .env.example
 │
 ├── streamlit/                  # Service Streamlit
@@ -519,7 +525,8 @@ MLOPS---LOL-draft-analyzer/
 │   └── tests/                  # Tests feature engineering + MLflow + drift + auto-retrain
 │
 └── scripts/
-    ├── seed_models.sh          # Seed modèles depuis projet source
+    ├── fetch_dump.sh           # Télécharge le dump DB depuis Google Drive (md5 vérifié)
+    ├── seed_models.sh          # Seed modèles dans l'API (depuis api/models/ par défaut)
     └── auto_retrain.py         # Hook ré-entraînement gated par le drift (Phase 4)
 ```
 

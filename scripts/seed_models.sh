@@ -18,12 +18,14 @@ fail() {
 }
 
 # ── Locate the source models directory ──────────────────────────────────────
-# The original (source) project lives near this repo. We auto-detect it in
-# order: an explicit SOURCE_MODELS_DIR, then the source project one level up
-# (sibling layout), then two levels up (when this clean project is nested under
-# e.g. MLOPS/MLOPS---LOL-draft-analyzer/). First match wins.
+# Auto-detect in order: an explicit SOURCE_MODELS_DIR, then this repo's own
+# committed api/models/ (the default — works on any fresh clone), then the
+# original source project one level up (sibling layout), then two levels up
+# (when this clean project is nested under e.g. MLOPS/MLOPS---LOL-draft-analyzer/).
+# First candidate that actually CONTAINS model_*.pkl wins.
 CANDIDATES=(
     ${SOURCE_MODELS_DIR:+"$SOURCE_MODELS_DIR"}
+    "${PROJECT_DIR}/api/models"
     "${PROJECT_DIR}/../datascientest-lol-draft_analyzer/models"
     "${PROJECT_DIR}/../../datascientest-lol-draft_analyzer/models"
 )
@@ -31,8 +33,13 @@ CANDIDATES=(
 SOURCE_DIR=""
 for candidate in "${CANDIDATES[@]}"; do
     if [ -d "$candidate" ]; then
-        SOURCE_DIR="$candidate"
-        break
+        shopt -s nullglob
+        found=("$candidate"/model_*.pkl)
+        shopt -u nullglob
+        if [ "${#found[@]}" -gt 0 ]; then
+            SOURCE_DIR="$candidate"
+            break
+        fi
     fi
 done
 

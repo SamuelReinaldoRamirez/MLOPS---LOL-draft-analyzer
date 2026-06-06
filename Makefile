@@ -2,8 +2,9 @@
 # LoL Draft Predictor — local orchestration (Phase 3)
 #
 # Thin wrappers over the EXISTING docker compose / script commands. No live Riot
-# collection: the pipeline uses the existing database/lol_draft.dump (git-ignored,
-# ~747 MB, placed in database/ before `make demo`/`make restore`).
+# collection: the pipeline uses database/lol_draft.dump (~783 MB, git-ignored).
+# `make demo`/`make restore` AUTO-DOWNLOAD it from Google Drive (md5-verified)
+# via scripts/fetch_dump.sh, so a fresh clone needs nothing placed by hand.
 #
 # Quick start (full local pipeline):  make demo
 # Run tests (no Docker/DB):           make test
@@ -16,7 +17,7 @@ DB_CONTAINER := lol_draft_db
 
 .DEFAULT_GOAL := help
 
-.PHONY: help env up up-db down clean test lint build restore seed train demo logs ps \
+.PHONY: help env up up-db down clean test lint build fetch-dump restore seed train demo logs ps \
         monitoring-up monitoring-down metrics drift retrain \
         dvc-install dvc-status dvc-track-data dvc-push dvc-pull dvc-repro dvc-dag dvc-metrics \
         k8s-validate k8s-apply k8s-delete k8s-status
@@ -27,7 +28,7 @@ help:
 	@echo ""
 	@grep -E '^## ' $(MAKEFILE_LIST) | sed -e 's/## //' | awk -F': ' '{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 	@echo ""
-	@echo "Full local pipeline: make demo  (needs $(DUMP) present)"
+	@echo "Full local pipeline: make demo  (auto-downloads the DB dump from Google Drive)"
 
 ## env: Create .env from .env.example if missing (placeholders only)
 env:
@@ -42,9 +43,13 @@ up: env
 up-db: env
 	$(COMPOSE) up -d postgres
 
-## restore: Restore the DB from the existing dump (idempotent; only loads when DB is empty on first boot)
-restore: up-db
-	@test -f $(DUMP) || { echo "ERROR: $(DUMP) not found. Place the (git-ignored) dump in database/ first."; exit 1; }
+## fetch-dump: Download the DB dump (~783 MB) from Google Drive if missing (md5-verified)
+fetch-dump:
+	@./scripts/fetch_dump.sh
+
+## restore: Restore the DB from the dump (auto-downloads it if missing; idempotent — only loads when DB is empty on first boot)
+restore: up-db fetch-dump
+	@test -f $(DUMP) || { echo "ERROR: $(DUMP) missing and auto-download failed. See scripts/fetch_dump.sh."; exit 1; }
 	@echo "Waiting for postgres to be healthy..."
 	@until [ "$$($(COMPOSE) ps -q postgres | xargs -r docker inspect -f '{{.State.Health.Status}}' 2>/dev/null)" = "healthy" ]; do sleep 2; done
 	@echo "Postgres healthy. The dump is auto-restored on first boot via database/restore.sh"
