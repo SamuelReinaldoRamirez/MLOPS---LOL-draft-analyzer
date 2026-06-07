@@ -18,7 +18,7 @@ DB_CONTAINER := lol_draft_db
 .DEFAULT_GOAL := help
 
 .PHONY: help env up up-db down clean test lint build fetch-dump restore seed train demo logs ps \
-        monitoring-up monitoring-down metrics drift retrain \
+        monitoring-up monitoring-down metrics drift drift-push retrain \
         dvc-install dvc-status dvc-track-data dvc-push dvc-pull dvc-repro dvc-dag dvc-metrics \
         k8s-validate k8s-apply k8s-delete k8s-status
 
@@ -120,6 +120,10 @@ drift:
 ## retrain: Drift-gated auto-retrain hook (dry-run: decides, never triggers training)
 retrain:
 	python scripts/auto_retrain.py --dry-run
+
+## drift-push: Compute drift + push it to the prod Pushgateway (-> Prometheus/Grafana). Pass ARGS=--drift to simulate drift
+drift-push:
+	./scripts/push_drift.sh $(ARGS)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Phase 2 — Data + Model Versioning (DVC)

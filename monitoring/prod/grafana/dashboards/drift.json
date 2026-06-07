@@ -1,0 +1,97 @@
+{
+  "uid": "lol-drift",
+  "title": "LoL Draft Predictor — Data Drift",
+  "tags": ["drift", "mlops", "evidently"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Drift share (latest)",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "refId": "A", "expr": "lol_drift_share", "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" } }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 0.5 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Retrain due? (drift > threshold)",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "refId": "A", "expr": "lol_drift_breach", "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" } }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "No — healthy", "color": "green" } } },
+            { "type": "value", "options": { "1": { "text": "YES — retrain", "color": "red" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] }
+        },
+        "overrides": []
+      },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Drifted columns",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "refId": "A", "expr": "lol_drift_n_drifted", "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" } },
+        { "refId": "B", "expr": "lol_drift_n_columns", "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" } }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Drift share over time vs threshold",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 7 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        { "refId": "A", "expr": "lol_drift_share", "legendFormat": "drift share", "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" } },
+        { "refId": "B", "expr": "lol_drift_threshold", "legendFormat": "threshold", "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" } }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10, "showPoints": "auto" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "threshold" }, "properties": [ { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
+    }
+  ]
+}
