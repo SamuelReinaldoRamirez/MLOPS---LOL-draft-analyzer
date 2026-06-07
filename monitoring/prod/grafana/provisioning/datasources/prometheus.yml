@@ -1,8 +1,9 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Grafana provisioned datasource (PRODUCTION on Fly.io)
-# Reaches Prometheus over Fly's private 6PN network. Reliable now that the
-# Prometheus app is always-on (min_machines_running=1) — .internal resolves to a
-# running instance, with no dependency on public DNS/cert propagation.
+# Uses the Prometheus app's PUBLIC HTTPS endpoint (via fly-proxy), NOT .internal:
+# the proxy auto-starts the machine on a query, so the dashboard never 502s with
+# "no such host" if Prometheus happened to be stopped. ('access: proxy' means
+# Grafana's backend makes the request, so this works regardless of the browser.)
 # ─────────────────────────────────────────────────────────────────────────────
 apiVersion: 1
 
@@ -10,7 +11,7 @@ datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
-    url: http://lol-draft-prometheus.internal:9090
+    url: https://lol-draft-prometheus.fly.dev
     isDefault: true
     editable: true
     jsonData:
