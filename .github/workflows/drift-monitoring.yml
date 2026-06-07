@@ -1,0 +1,40 @@
+name: Drift monitoring
+
+# Scheduled data-drift check: runs the Evidently drift report and pushes the
+# result (lol_drift_share / breach / ...) to the production Pushgateway, which
+# Prometheus scrapes and Grafana visualises (dashboard uid "lol-drift").
+#
+# Runs daily, and on demand (with an option to simulate drift for a live demo).
+on:
+  schedule:
+    - cron: "0 6 * * *"   # every day at 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      simulate_drift:
+        description: "Simulate drift (pushes a high drift_share to trigger the alert)"
+        type: boolean
+        default: false
+
+# No secrets needed: the Pushgateway endpoint is public. Override the target by
+# setting a repository variable PUSHGATEWAY_URL if it ever changes.
+env:
+  PUSHGATEWAY_URL: ${{ vars.PUSHGATEWAY_URL || 'https://lol-draft-pushgateway.fly.dev' }}
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install drift deps
+        run: pip install "evidently>=0.4.0" "pandas>=2.0.0" "numpy>=1.24.0" "scikit-learn>=1.3.0"
+
+      - name: Compute drift and push to Pushgateway
+        run: |
+          ARGS=""
+          if [ "${{ inputs.simulate_drift }}" = "true" ]; then ARGS="--drift"; fi
+          DRIFT_NO_DOCKER=1 ./scripts/push_drift.sh $ARGS

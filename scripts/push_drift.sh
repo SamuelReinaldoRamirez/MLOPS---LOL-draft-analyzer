@@ -24,14 +24,18 @@ PUSHGATEWAY_URL="${PUSHGATEWAY_URL:-https://lol-draft-pushgateway.fly.dev}"
 THRESHOLD="${DRIFT_THRESHOLD:-0.5}"
 SUMMARY="monitoring/drift/reports/drift_summary.json"
 
-echo "🧮 Computing drift report (Evidently, in the training image)..."
-# The training container doesn't mount the project, so write the report to a
-# bind-mounted host dir (via --out-dir) — otherwise the JSON stays inside the
-# container and we'd read a stale host copy.
+echo "🧮 Computing drift report (Evidently)..."
 mkdir -p "$PROJECT_DIR/monitoring/drift/reports"
-docker compose run --rm \
-    -v "$PROJECT_DIR/monitoring/drift/reports:/out" \
-    training python scripts/drift_report.py "$@" --out-dir /out >/dev/null
+# Two runners: Docker (local default — uses the training image's deps) or plain
+# Python (CI / when deps are already installed; set DRIFT_NO_DOCKER=1). Both
+# write to the host monitoring/drift/reports via --out-dir.
+if [ "${DRIFT_NO_DOCKER:-0}" = "1" ] || ! command -v docker >/dev/null 2>&1; then
+    python3 training/scripts/drift_report.py "$@" --out-dir monitoring/drift/reports >/dev/null
+else
+    docker compose run --rm \
+        -v "$PROJECT_DIR/monitoring/drift/reports:/out" \
+        training python scripts/drift_report.py "$@" --out-dir /out >/dev/null
+fi
 
 test -f "$SUMMARY" || { echo "❌ $SUMMARY not produced"; exit 1; }
 
