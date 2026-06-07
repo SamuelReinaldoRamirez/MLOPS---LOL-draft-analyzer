@@ -1,0 +1,31 @@
+# Fly.io — MLflow tracking server (PRODUCTION).
+#
+# Self-contained: SQLite backend + local artifact store, both on a persistent
+# volume mounted at /mlflow_data (so experiments/models survive restarts and the
+# machine can scale to zero between visits). Public UI on :5000.
+#
+# Create the volume once, then deploy:
+#   fly volumes create mlflow_data --size 1 --region cdg -a lol-draft-mlflow
+#   cd mlflow/prod && fly deploy
+#
+# Log to it from training:  MLFLOW_TRACKING_URI=https://lol-draft-mlflow.fly.dev
+app = "lol-draft-mlflow"
+primary_region = "cdg"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 5000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[mounts]]
+  source = "mlflow_data"
+  destination = "/mlflow_data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
