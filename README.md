@@ -38,9 +38,11 @@ docker compose up -d          # postgres + streamlit + api + mlflow (+ prometheu
 > Le dump PostgreSQL `database/lol_draft.dump` (~783 Mo) est **git-ignoré** mais
 > **téléchargé automatiquement** depuis DagsHub (md5 vérifié) par
 > `scripts/fetch_dump.sh` lors d'un `make demo` / `make restore` — un clone neuf
-> n'a donc **rien à placer à la main**. Les modèles `model_*.pkl` sont, eux,
-> commités dans `api/models/`. Les **tests** et la **CI** n'ont besoin ni du dump
-> ni des modèles.
+> n'a donc **rien à placer à la main**. Les modèles `model_*.pkl` (~14,5 Mo) sont
+> de même **git-ignorés** mais **DVC-trackés sur DagsHub** et téléchargés
+> automatiquement par `scripts/fetch_models.sh` (`make fetch-models`, appelé par
+> `make demo`) ; seuls les pointeurs `api/models/*.pkl.dvc` sont commités. Les
+> **tests** et la **CI** n'ont besoin ni du dump ni des modèles.
 
 **URLs de démo** (une fois la stack démarrée) :
 

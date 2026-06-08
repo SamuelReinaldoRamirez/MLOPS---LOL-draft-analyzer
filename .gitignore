@@ -27,18 +27,18 @@ data/
 models/
 *.pkl
 
-# API models: baked into the image via api/Dockerfile and seeded into the
-# compose volume by scripts/seed_models.sh. These 5 pre-trained model_*.pkl
-# (~14.5 MB total) ARE committed so `make demo` works on any fresh clone — in
-# particular model_draft.pkl is NOT reproducible from this repo's training code
-# (train_all_models.py only regenerates the @5/@10/@15/@20 timeline models), so
-# it can only be shipped as a binary. The broad `models/` rule above would
-# ignore the whole api/models/ directory (and git won't descend into an ignored
-# dir to honor a nested negation), so re-include the directory and the models.
+# API models: the 5 pre-trained model_*.pkl (~14.5 MB) are DVC-tracked and
+# hosted on DagsHub, NOT committed to git. `make demo` pulls them via
+# `make fetch-models` (dvc pull) before seeding the compose volume. The .pkl
+# binaries stay git-ignored (broad `models/` + `*.pkl` rules above); only the
+# DVC pointer files (api/models/*.pkl.dvc) and .gitkeep are committed. The broad
+# `models/` rule would ignore the whole api/models/ directory (and git won't
+# descend into an ignored dir to honor a nested negation), so re-include the
+# directory and the pointers.
 !api/models/
 api/models/*
 !api/models/.gitkeep
-!api/models/model_*.pkl
+!api/models/*.dvc
 
 # DVC pipeline metrics (Phase 2). Tiny JSON files (~200 bytes each) tracked
 # with `cache: false` so they live in git, not the DVC cache. Re-include them

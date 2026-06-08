@@ -17,7 +17,7 @@ DB_CONTAINER := lol_draft_db
 
 .DEFAULT_GOAL := help
 
-.PHONY: help env up up-db down clean test lint build fetch-dump restore seed train demo logs ps \
+.PHONY: help env up up-db down clean test lint build fetch-dump fetch-models restore seed train demo logs ps \
         monitoring-up monitoring-down metrics drift drift-push retrain \
         dvc-install dvc-status dvc-track-data dvc-push dvc-pull dvc-repro dvc-dag dvc-metrics \
         k8s-validate k8s-apply k8s-delete k8s-status
@@ -47,6 +47,10 @@ up-db: env
 fetch-dump:
 	@./scripts/fetch_dump.sh
 
+## fetch-models: Download the trained models (~14.5 MB) from DagsHub via DVC if missing
+fetch-models:
+	@./scripts/fetch_models.sh
+
 ## restore: Restore the DB from the dump (auto-downloads it if missing; idempotent — only loads when DB is empty on first boot)
 restore: up-db fetch-dump
 	@test -f $(DUMP) || { echo "ERROR: $(DUMP) missing and auto-download failed. See scripts/fetch_dump.sh."; exit 1; }
@@ -55,8 +59,8 @@ restore: up-db fetch-dump
 	@echo "Postgres healthy. The dump is auto-restored on first boot via database/restore.sh"
 	@echo "(To force a fresh restore: 'make clean' then 'make restore'.)"
 
-## seed: Seed model_*.pkl into the running api container (from api/models/ by default)
-seed:
+## seed: Seed model_*.pkl into the running api container (pulls them from DagsHub first if missing)
+seed: fetch-models
 	./scripts/seed_models.sh
 
 ## train: Run the training profile against the DB (logs to MLflow if up; NO-OP otherwise)
@@ -64,8 +68,8 @@ train: env
 	$(COMPOSE) up -d mlflow
 	$(COMPOSE) run --rm training
 
-## demo: Full local pipeline — db -> restore -> seed -> train -> api+streamlit+mlflow up
-demo: env up-db restore up seed train
+## demo: Full local pipeline — fetch models -> db -> restore -> seed -> train -> api+streamlit+mlflow up
+demo: env fetch-models up-db restore up seed train
 	@echo ""
 	@echo "Demo stack is up:"
 	@echo "  Streamlit : http://localhost:8501"
