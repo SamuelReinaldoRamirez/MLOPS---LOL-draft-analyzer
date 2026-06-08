@@ -23,6 +23,11 @@ data/
 !frontend/src/data/
 !frontend/src/data/**
 
+# ...and the multi-page Streamlit ships SMALL *sample* parquets (~31 MB) so its
+# parquet-backed pages work reproducibly (the full ~1 GB parquets are not bundled).
+!streamlit_app/sample_data/
+!streamlit_app/sample_data/*.parquet
+
 # Models (trained, too large for git)
 models/
 *.pkl

@@ -45,9 +45,12 @@ services:
   # Streamlit Frontend
   # ────────────────────────────────────────
   streamlit:
+    # Multi-page Streamlit app (streamlit_app/). Build context is the repo root
+    # so it can bundle streamlit_app/ + src/. Reads match data from Postgres;
+    # models come from the shared `models` volume (populated by `make seed`).
     build:
-      context: ./streamlit
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: streamlit_app/Dockerfile
     container_name: lol_draft_streamlit
     ports:
       - "${STREAMLIT_PORT:-8501}:8501"

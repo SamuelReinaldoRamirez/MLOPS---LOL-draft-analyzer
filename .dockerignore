@@ -1,0 +1,37 @@
+# Root build context is used by the streamlit_app/Dockerfile (multi-page app).
+# Keep the context small: exclude everything heavy/irrelevant. Do NOT exclude
+# streamlit_app/ (incl. sample_data/*.parquet), src/, or streamlit/.streamlit/.
+.git
+.github
+.dvc/cache
+.dvc-storage
+.dvc
+.venv
+venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ruff_cache
+.playwright-mcp
+.conductor
+
+# Big data / dumps / binaries (the app reads from Postgres, not these)
+database/
+*.dump
+*.db
+*.sqlite
+*.csv.gz
+*.pptx
+
+# Other services & frontend (not needed by the Streamlit image)
+frontend/
+api/
+mlflow/
+monitoring/
+k8s/
+docs/
+training/
+csv_exporter/
+api_db/
+models/
+streamlit/app/
